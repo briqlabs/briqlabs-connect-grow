@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface ProductCardProps {
   icon: LucideIcon;
