@@ -12,6 +12,7 @@ interface ProductCardProps {
   features: string[];
   gradient: "primary" | "accent";
   delay?: number;
+  learnMoreLink?: string;
 }
 
 const ProductCard = ({ icon: Icon, title, subtitle, description, features, gradient, delay = 0 }: ProductCardProps) => {
