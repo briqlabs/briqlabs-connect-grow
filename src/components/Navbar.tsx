@@ -11,14 +11,12 @@ const Navbar = ({ openForm }: { openForm: LeadFormOpener }) => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass">
       <div className="container mx-auto flex items-center justify-between h-16 px-6">
-        <a href="/" className="flex items-center gap-3 group">
-          <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-primary via-accent to-primary flex items-center justify-center font-display font-extrabold text-primary-foreground text-lg tracking-tight shadow-lg shadow-primary/25 group-hover:shadow-primary/40 transition-shadow duration-300">
-            <span className="relative z-10">B</span>
+        <a href="/" className="flex items-center gap-2 group">
+          <div className="relative px-3 py-1.5 rounded-xl bg-gradient-to-br from-primary via-accent to-primary flex items-center justify-center font-display font-extrabold text-primary-foreground text-base tracking-tight shadow-lg shadow-primary/25 group-hover:shadow-primary/40 transition-shadow duration-300">
+            <span className="relative z-10">Briqlabs</span>
             <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary to-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </div>
-          <span className="font-display font-bold text-xl tracking-tight text-foreground">
-            Briqlabs<span className="text-primary ml-1.5 font-extrabold">AI</span>
-          </span>
+          <span className="font-display font-extrabold text-xl tracking-tight text-primary">AI</span>
         </a>
 
         <div className="hidden md:flex items-center gap-8">
