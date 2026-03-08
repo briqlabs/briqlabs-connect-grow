@@ -6,7 +6,7 @@ interface LeadFormDialogProps {
   title?: string;
 }
 
-const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdR8vJ3xKQx0gRqFpLrBCxVDzKJxcqWsCxqchGpMfCfVFxJSQ/viewform?embedded=true";
+const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSd0cg9vz0UEeaCjG3G8KVSGEx6vfo0SmiZ659rflnBNFB2H4Q/viewform?embedded=true";
 
 const LeadFormDialog = ({ open, onOpenChange, title = "Get Started" }: LeadFormDialogProps) => {
   return (
