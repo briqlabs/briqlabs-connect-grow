@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { ArrowRight, Zap } from "lucide-react";
+import type { LeadFormOpener } from "@/pages/Index";
 
-const CTASection = () => {
+const CTASection = ({ openForm }: { openForm: LeadFormOpener }) => {
   return (
     <section id="contact" className="py-24 md:py-32 relative">
       <div className="container mx-auto px-6">
@@ -25,11 +26,11 @@ const CTASection = () => {
               Join 500+ businesses already using Briqlabs AI to generate more leads and never miss an appointment.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button variant="hero" size="lg" className="text-base px-8 py-6">
+              <Button variant="hero" size="lg" className="text-base px-8 py-6" onClick={() => openForm("Get Started Free")}>
                 Get Started Free
                 <ArrowRight size={18} />
               </Button>
-              <Button variant="hero-outline" size="lg" className="text-base px-8 py-6">
+              <Button variant="hero-outline" size="lg" className="text-base px-8 py-6" onClick={() => openForm("Book a Demo")}>
                 Book a Demo
               </Button>
             </div>

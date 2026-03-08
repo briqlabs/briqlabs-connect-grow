@@ -2,8 +2,9 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import type { LeadFormOpener } from "@/pages/Index";
 
-const Navbar = () => {
+const Navbar = ({ openForm }: { openForm: LeadFormOpener }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -26,7 +27,7 @@ const Navbar = () => {
         </div>
 
         <div className="hidden md:flex items-center gap-3">
-          <Button variant="hero" size="sm">Get Started</Button>
+          <Button variant="hero" size="sm" onClick={() => openForm("Get Started")}>Get Started</Button>
         </div>
 
         <button className="md:hidden text-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
@@ -47,7 +48,7 @@ const Navbar = () => {
               <a href="#whatsapp" className="text-sm text-muted-foreground hover:text-foreground">WhatsApp AI</a>
               <a href="#voice" className="text-sm text-muted-foreground hover:text-foreground">Voice AI</a>
               <a href="#contact" className="text-sm text-muted-foreground hover:text-foreground">Contact</a>
-              <Button variant="hero" size="sm">Get Started</Button>
+              <Button variant="hero" size="sm" onClick={() => { openForm("Get Started"); setMobileOpen(false); }}>Get Started</Button>
             </div>
           </motion.div>
         )}
