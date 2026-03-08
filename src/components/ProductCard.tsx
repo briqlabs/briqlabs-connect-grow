@@ -51,9 +51,15 @@ const ProductCard = ({ icon: Icon, title, subtitle, description, features, gradi
         ))}
       </ul>
 
-      <Button variant={gradient === "primary" ? "hero" : "hero-outline"} className="group-hover:translate-x-1 transition-transform">
-        Learn More <ArrowRight size={16} />
-      </Button>
+      {learnMoreLink ? (
+        <Button variant={gradient === "primary" ? "hero" : "hero-outline"} className="group-hover:translate-x-1 transition-transform" asChild>
+          <Link to={learnMoreLink}>Learn More <ArrowRight size={16} /></Link>
+        </Button>
+      ) : (
+        <Button variant={gradient === "primary" ? "hero" : "hero-outline"} className="group-hover:translate-x-1 transition-transform">
+          Learn More <ArrowRight size={16} />
+        </Button>
+      )}
     </motion.div>
   );
 };
