@@ -34,7 +34,6 @@ const ProductsSection = () => {
               ]}
               gradient="primary"
               delay={0}
-              learnMoreLink="/whatsapp-ai"
             />
           </div>
           <div id="voice">
