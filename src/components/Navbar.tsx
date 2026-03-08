@@ -3,6 +3,7 @@ import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { LeadFormOpener } from "@/pages/Index";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const Navbar = ({ openForm }: { openForm: LeadFormOpener }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -26,7 +27,8 @@ const Navbar = ({ openForm }: { openForm: LeadFormOpener }) => {
           <a href="#contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contact</a>
         </div>
 
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-2">
+          <ThemeToggle />
           <Button variant="hero" size="sm" onClick={() => openForm("Get Started")}>Get Started</Button>
         </div>
 
@@ -48,7 +50,10 @@ const Navbar = ({ openForm }: { openForm: LeadFormOpener }) => {
               <a href="#whatsapp" className="text-sm text-muted-foreground hover:text-foreground">WhatsApp AI</a>
               <a href="#voice" className="text-sm text-muted-foreground hover:text-foreground">Voice AI</a>
               <a href="#contact" className="text-sm text-muted-foreground hover:text-foreground">Contact</a>
-              <Button variant="hero" size="sm" onClick={() => { openForm("Get Started"); setMobileOpen(false); }}>Get Started</Button>
+              <div className="flex items-center gap-3">
+                <ThemeToggle />
+                <Button variant="hero" size="sm" onClick={() => { openForm("Get Started"); setMobileOpen(false); }}>Get Started</Button>
+              </div>
             </div>
           </motion.div>
         )}
