@@ -43,7 +43,7 @@ const HeroSection = () => {
 
           <div className="mt-16 flex items-center justify-center gap-8 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-500" />
+              <div className="w-2 h-2 rounded-full bg-primary/80" />
               99.9% Uptime
             </div>
             <div className="flex items-center gap-2">
