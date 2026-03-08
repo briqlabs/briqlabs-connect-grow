@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface ProductCardProps {
   icon: LucideIcon;
@@ -11,9 +12,10 @@ interface ProductCardProps {
   features: string[];
   gradient: "primary" | "accent";
   delay?: number;
+  learnMoreLink?: string;
 }
 
-const ProductCard = ({ icon: Icon, title, subtitle, description, features, gradient, delay = 0 }: ProductCardProps) => {
+const ProductCard = ({ icon: Icon, title, subtitle, description, features, gradient, delay = 0, learnMoreLink }: ProductCardProps) => {
   const gradientStyles = {
     primary: "from-primary/20 to-primary/5 border-primary/20 hover:border-primary/40",
     accent: "from-accent/20 to-accent/5 border-accent/20 hover:border-accent/40",
@@ -49,9 +51,15 @@ const ProductCard = ({ icon: Icon, title, subtitle, description, features, gradi
         ))}
       </ul>
 
-      <Button variant={gradient === "primary" ? "hero" : "hero-outline"} className="group-hover:translate-x-1 transition-transform">
-        Learn More <ArrowRight size={16} />
-      </Button>
+      {learnMoreLink ? (
+        <Button variant={gradient === "primary" ? "hero" : "hero-outline"} className="group-hover:translate-x-1 transition-transform" asChild>
+          <Link to={learnMoreLink}>Learn More <ArrowRight size={16} /></Link>
+        </Button>
+      ) : (
+        <Button variant={gradient === "primary" ? "hero" : "hero-outline"} className="group-hover:translate-x-1 transition-transform">
+          Learn More <ArrowRight size={16} />
+        </Button>
+      )}
     </motion.div>
   );
 };
