@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { ArrowRight, Bot, Sparkles } from "lucide-react";
+import { ArrowRight, Bot } from "lucide-react";
+import { Sparkles } from "lucide-react";
+import type { LeadFormOpener } from "@/pages/Index";
 
-const HeroSection = () => {
+const HeroSection = ({ openForm }: { openForm: LeadFormOpener }) => {
   return (
     <section className="relative min-h-screen flex items-center justify-center hero-glow overflow-hidden pt-16">
-      {/* Floating orbs */}
       <div className="absolute top-1/4 left-1/4 w-72 h-72 rounded-full bg-primary/5 blur-3xl animate-float" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-accent/5 blur-3xl animate-float" style={{ animationDelay: "3s" }} />
 
@@ -31,11 +32,11 @@ const HeroSection = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button variant="hero" size="lg" className="text-base px-8 py-6">
+            <Button variant="hero" size="lg" className="text-base px-8 py-6" onClick={() => openForm("Start Free Trial")}>
               Start Free Trial
               <ArrowRight size={18} />
             </Button>
-            <Button variant="hero-outline" size="lg" className="text-base px-8 py-6">
+            <Button variant="hero-outline" size="lg" className="text-base px-8 py-6" onClick={() => openForm("Book a Demo")}>
               <Bot size={18} />
               Watch Demo
             </Button>
