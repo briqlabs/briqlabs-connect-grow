@@ -21,7 +21,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Navbar openForm={openForm} />
       <HeroSection openForm={openForm} />
-      <ProductsSection />
+      <ProductsSection openForm={openForm} />
       <CTASection openForm={openForm} />
       <Footer />
       <LeadFormDialog open={dialogOpen} onOpenChange={setDialogOpen} title={dialogTitle} />
