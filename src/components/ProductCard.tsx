@@ -50,7 +50,7 @@ const ProductCard = ({ icon: Icon, title, subtitle, description, features, gradi
         ))}
       </ul>
 
-      <Button variant={gradient === "primary" ? "hero" : "hero-outline"} className="group-hover:translate-x-1 transition-transform">
+      <Button variant={gradient === "primary" ? "hero" : "hero-outline"} className="group-hover:translate-x-1 transition-transform" onClick={onLearnMore}>
         Learn More <ArrowRight size={16} />
       </Button>
     </motion.div>
