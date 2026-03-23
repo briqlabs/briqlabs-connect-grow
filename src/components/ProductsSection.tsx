@@ -3,14 +3,14 @@ import { MessageCircle, Phone } from "lucide-react";
 import ProductCard from "./ProductCard";
 import { motion } from "framer-motion";
 import WhatsAppDemoDialog from "./WhatsAppDemoDialog";
-
+import VoiceAIDemoDialog from "./VoiceAIDemoDialog";
 interface ProductsSectionProps {
   openForm?: (title?: string) => void;
 }
 
 const ProductsSection = ({ openForm }: ProductsSectionProps) => {
   const [whatsappDemoOpen, setWhatsappDemoOpen] = useState(false);
-
+  const [voiceDemoOpen, setVoiceDemoOpen] = useState(false);
   return (
     <>
       <section id="products" className="py-24 md:py-32 relative">
@@ -61,6 +61,7 @@ const ProductsSection = ({ openForm }: ProductsSectionProps) => {
                 ]}
                 gradient="accent"
                 delay={0.2}
+                onLearnMore={() => setVoiceDemoOpen(true)}
               />
             </div>
           </div>
@@ -70,6 +71,12 @@ const ProductsSection = ({ openForm }: ProductsSectionProps) => {
       <WhatsAppDemoDialog
         open={whatsappDemoOpen}
         onOpenChange={setWhatsappDemoOpen}
+        onGetStarted={() => openForm?.("Start Free Trial")}
+      />
+
+      <VoiceAIDemoDialog
+        open={voiceDemoOpen}
+        onOpenChange={setVoiceDemoOpen}
         onGetStarted={() => openForm?.("Start Free Trial")}
       />
     </>
