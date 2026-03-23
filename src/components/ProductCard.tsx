@@ -11,9 +11,10 @@ interface ProductCardProps {
   features: string[];
   gradient: "primary" | "accent";
   delay?: number;
+  onLearnMore?: () => void;
 }
 
-const ProductCard = ({ icon: Icon, title, subtitle, description, features, gradient, delay = 0 }: ProductCardProps) => {
+const ProductCard = ({ icon: Icon, title, subtitle, description, features, gradient, delay = 0, onLearnMore }: ProductCardProps) => {
   const gradientStyles = {
     primary: "from-primary/20 to-primary/5 border-primary/20 hover:border-primary/40",
     accent: "from-accent/20 to-accent/5 border-accent/20 hover:border-accent/40",
