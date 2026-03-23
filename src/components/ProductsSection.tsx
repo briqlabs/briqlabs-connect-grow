@@ -10,7 +10,7 @@ interface ProductsSectionProps {
 
 const ProductsSection = ({ openForm }: ProductsSectionProps) => {
   const [whatsappDemoOpen, setWhatsappDemoOpen] = useState(false);
-
+  const [voiceDemoOpen, setVoiceDemoOpen] = useState(false);
   return (
     <>
       <section id="products" className="py-24 md:py-32 relative">
