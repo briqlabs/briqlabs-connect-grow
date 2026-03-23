@@ -61,6 +61,7 @@ const ProductsSection = ({ openForm }: ProductsSectionProps) => {
                 ]}
                 gradient="accent"
                 delay={0.2}
+                onLearnMore={() => setVoiceDemoOpen(true)}
               />
             </div>
           </div>
