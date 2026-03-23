@@ -73,6 +73,12 @@ const ProductsSection = ({ openForm }: ProductsSectionProps) => {
         onOpenChange={setWhatsappDemoOpen}
         onGetStarted={() => openForm?.("Start Free Trial")}
       />
+
+      <VoiceAIDemoDialog
+        open={voiceDemoOpen}
+        onOpenChange={setVoiceDemoOpen}
+        onGetStarted={() => openForm?.("Start Free Trial")}
+      />
     </>
   );
 };
