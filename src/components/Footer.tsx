@@ -12,8 +12,8 @@ const Footer = () => {
             </span>
           </div>
           <div className="flex items-center gap-4">
-            <a href="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Privacy Policy</a>
-            <a href="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Terms & Conditions</a>
+            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Privacy Policy</a>
+            <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Terms & Conditions</a>
           </div>
           <p className="text-sm text-muted-foreground">
             © {new Date().getFullYear()} Briqlabs AI. All rights reserved.
