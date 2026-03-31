@@ -1,20 +1,14 @@
-import { useState, useEffect, useCallback, createContext, useContext } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, Phone, PhoneOff, Mic, Check, Calendar, Clock, User } from "lucide-react";
+import { X, Phone, PhoneOff, Mic, Check, CheckCheck, Calendar, Clock, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSpeech } from "@/hooks/use-speech";
 
 interface VoiceAIDemoDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onGetStarted?: () => void;
 }
-
-// Speech context so scenes can speak
-const SpeechContext = createContext<{ speak: (text: string, speaker: "AI" | "Customer", delay?: number) => void }>({
-  speak: () => {},
-});
 
 const scenesMeta = [
   { title: "Incoming Call" },
@@ -26,6 +20,7 @@ const scenesMeta = [
   { title: "Ready to Automate" },
 ];
 
+// Waveform animation bars
 const Waveform = ({ active }: { active: boolean }) => (
   <div className="flex items-center gap-[3px] h-8">
     {Array.from({ length: 24 }).map((_, i) => (
@@ -46,41 +41,29 @@ const Waveform = ({ active }: { active: boolean }) => (
   </div>
 );
 
-// Transcript line that speaks when it appears
-const TranscriptLine = ({ speaker, text, delay }: { speaker: "AI" | "Customer"; text: string; delay: number }) => {
-  const { speak } = useContext(SpeechContext);
+// Transcript line component
+const TranscriptLine = ({ speaker, text, delay }: { speaker: "AI" | "Customer"; text: string; delay: number }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 8 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay, duration: 0.4 }}
+    className="flex gap-2 text-sm"
+  >
+    <span className={`font-semibold shrink-0 ${speaker === "AI" ? "text-primary" : "text-accent"}`}>
+      {speaker}:
+    </span>
+    <span className="text-foreground">{text}</span>
+  </motion.div>
+);
 
-  useEffect(() => {
-    const t = setTimeout(() => speak(text, speaker), delay * 1000 + 200);
-    return () => clearTimeout(t);
-  }, [text, speaker, delay, speak]);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay, duration: 0.4 }}
-      className="flex gap-2 text-sm"
-    >
-      <span className={`font-semibold shrink-0 ${speaker === "AI" ? "text-primary" : "text-accent"}`}>
-        {speaker}:
-      </span>
-      <span className="text-foreground">{text}</span>
-    </motion.div>
-  );
-};
-
+// Scene 1: Incoming call
 const IncomingCallScene = () => {
   const [answered, setAnswered] = useState(false);
-  const { speak } = useContext(SpeechContext);
 
   useEffect(() => {
-    const t = setTimeout(() => {
-      setAnswered(true);
-      speak("AI Agent Connected. How can I help you today?", "AI");
-    }, 2500);
+    const t = setTimeout(() => setAnswered(true), 2500);
     return () => clearTimeout(t);
-  }, [speak]);
+  }, []);
 
   return (
     <div className="flex flex-col items-center justify-center py-6 gap-6">
@@ -120,6 +103,7 @@ const IncomingCallScene = () => {
   );
 };
 
+// Scene 2: Greeting + transcript
 const GreetingScene = () => {
   const lines: { speaker: "AI" | "Customer"; text: string }[] = [
     { speaker: "AI", text: "Hello! Thanks for calling TechFlow Solutions. How can I help you today?" },
@@ -149,6 +133,7 @@ const GreetingScene = () => {
   );
 };
 
+// Scene 3: Qualification
 const QualificationScene = () => {
   const lines: { speaker: "AI" | "Customer"; text: string }[] = [
     { speaker: "AI", text: "Sure! May I have your name please?" },
@@ -178,9 +163,9 @@ const QualificationScene = () => {
   );
 };
 
+// Scene 4: Calendar scheduling
 const SchedulingScene = () => {
   const [selected, setSelected] = useState<number | null>(null);
-  const { speak } = useContext(SpeechContext);
   const slots = [
     { day: "Mon, Mar 24", time: "10:00 AM" },
     { day: "Mon, Mar 24", time: "3:00 PM" },
@@ -189,12 +174,9 @@ const SchedulingScene = () => {
   ];
 
   useEffect(() => {
-    const t = setTimeout(() => {
-      setSelected(2);
-      speak(`Booked! Tuesday March 25th at 11:00 AM.`, "AI");
-    }, 2200);
+    const t = setTimeout(() => setSelected(2), 2200);
     return () => clearTimeout(t);
-  }, [speak]);
+  }, []);
 
   return (
     <div className="flex flex-col gap-4">
@@ -244,45 +226,34 @@ const SchedulingScene = () => {
   );
 };
 
-const ConfirmationScene = () => {
-  const { speak } = useContext(SpeechContext);
+// Scene 5: Confirmation
+const ConfirmationScene = () => (
+  <div className="flex flex-col items-center justify-center py-6 gap-5">
+    <motion.div
+      initial={{ scale: 0 }}
+      animate={{ scale: 1 }}
+      transition={{ type: "spring", damping: 12 }}
+      className="w-16 h-16 rounded-full bg-green-500/15 flex items-center justify-center"
+    >
+      <Check size={32} className="text-green-500" />
+    </motion.div>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="text-center space-y-2">
+      <p className="text-lg font-semibold text-foreground">Call Completed</p>
+      <p className="text-sm text-muted-foreground">Duration: 2 min 34 sec</p>
+    </motion.div>
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }} className="bg-muted/30 rounded-xl p-4 border border-border text-sm text-foreground max-w-sm text-center">
+      "Your meeting has been scheduled. You'll receive a confirmation shortly."
+    </motion.div>
+  </div>
+);
 
-  useEffect(() => {
-    speak("Your meeting has been scheduled. You'll receive a confirmation shortly.", "AI");
-  }, [speak]);
-
-  return (
-    <div className="flex flex-col items-center justify-center py-6 gap-5">
-      <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ type: "spring", damping: 12 }}
-        className="w-16 h-16 rounded-full bg-green-500/15 flex items-center justify-center"
-      >
-        <Check size={32} className="text-green-500" />
-      </motion.div>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="text-center space-y-2">
-        <p className="text-lg font-semibold text-foreground">Call Completed</p>
-        <p className="text-sm text-muted-foreground">Duration: 2 min 34 sec</p>
-      </motion.div>
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }} className="bg-muted/30 rounded-xl p-4 border border-border text-sm text-foreground max-w-sm text-center">
-        "Your meeting has been scheduled. You'll receive a confirmation shortly."
-      </motion.div>
-    </div>
-  );
-};
-
+// Scene 6: CRM spreadsheet
 const CRMScene = () => {
-  const { speak } = useContext(SpeechContext);
   const rows = [
     { name: "David", company: "Apex Digital Agency", plan: "Growth", team: "20", status: "Demo Booked" },
     { name: "Emma", company: "CloudNet Inc", plan: "Enterprise", team: "50+", status: "Qualified" },
     { name: "Jason", company: "LaunchPad Co", plan: "Starter", team: "5", status: "New Lead" },
   ];
-
-  useEffect(() => {
-    speak("Lead details have been automatically saved to your CRM.", "AI");
-  }, [speak]);
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full">
@@ -334,62 +305,45 @@ const CRMScene = () => {
   );
 };
 
-const BrandingScene = () => {
-  const { speak } = useContext(SpeechContext);
-
-  useEffect(() => {
-    speak("Automate calls. Capture leads. Book meetings. 24/7 with Voice AI.", "AI");
-  }, [speak]);
-
-  return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center text-center py-8 gap-6">
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: "spring", damping: 15 }}
-        className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center"
-      >
-        <Phone size={32} className="text-primary-foreground" />
-      </motion.div>
-      <div className="space-y-3">
-        {["Automate calls.", "Capture leads.", "Book meetings.", "24/7 with Voice AI."].map((line, i) => (
-          <motion.p
-            key={i}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 + i * 0.2 }}
-            className={`${i === 0 ? "text-xl md:text-2xl font-bold text-foreground" : i === 3 ? "text-2xl md:text-3xl font-bold gradient-text" : "text-lg text-muted-foreground"}`}
-          >
-            {line}
-          </motion.p>
-        ))}
-      </div>
+// Scene 7: Branding
+const BrandingScene = () => (
+  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center text-center py-8 gap-6">
+    <motion.div
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: "spring", damping: 15 }}
+      className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center"
+    >
+      <Phone size={32} className="text-primary-foreground" />
     </motion.div>
-  );
-};
+    <div className="space-y-3">
+      {["Automate calls.", "Capture leads.", "Book meetings.", "24/7 with Voice AI."].map((line, i) => (
+        <motion.p
+          key={i}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 + i * 0.2 }}
+          className={`${i === 0 ? "text-xl md:text-2xl font-bold text-foreground" : i === 3 ? "text-2xl md:text-3xl font-bold gradient-text" : "text-lg text-muted-foreground"}`}
+        >
+          {line}
+        </motion.p>
+      ))}
+    </div>
+  </motion.div>
+);
 
 const VoiceAIDemoDialog = ({ open, onOpenChange, onGetStarted }: VoiceAIDemoDialogProps) => {
   const [currentScene, setCurrentScene] = useState(0);
   const totalScenes = scenesMeta.length;
-  const { speak, stop } = useSpeech();
 
   useEffect(() => {
-    if (open) {
-      setCurrentScene(0);
-    } else {
-      stop();
-    }
-  }, [open, stop]);
-
-  // Stop speech on scene change
-  useEffect(() => {
-    stop();
-  }, [currentScene, stop]);
+    if (open) setCurrentScene(0);
+  }, [open]);
 
   // Auto-advance
   useEffect(() => {
     if (!open) return;
-    const durations = [5000, 8000, 8000, 7000, 5000, 5000, 0];
+    const durations = [5000, 7000, 7000, 6000, 5000, 5000, 0];
     const d = durations[currentScene];
     if (d === 0) return;
     const t = setTimeout(() => {
@@ -411,88 +365,89 @@ const VoiceAIDemoDialog = ({ open, onOpenChange, onGetStarted }: VoiceAIDemoDial
   ];
 
   return (
-    <SpeechContext.Provider value={{ speak }}>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] p-0 overflow-hidden border-border bg-background gap-0">
-          <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-gradient-to-r from-primary/90 to-accent/90">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center">
-                <Phone size={20} className="text-white" />
-              </div>
-              <div>
-                <p className="text-white font-semibold text-sm">Voice AI Agent</p>
-                <p className="text-white/70 text-xs">Live Demo • Powered by AI</p>
-              </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] p-0 overflow-hidden border-border bg-background gap-0">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-gradient-to-r from-primary/90 to-accent/90">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center">
+              <Phone size={20} className="text-white" />
             </div>
-            <button onClick={() => onOpenChange(false)} className="text-white/70 hover:text-white transition-colors">
-              <X size={20} />
-            </button>
+            <div>
+              <p className="text-white font-semibold text-sm">Voice AI Agent</p>
+              <p className="text-white/70 text-xs">Live Demo • Powered by AI</p>
+            </div>
           </div>
+          <button onClick={() => onOpenChange(false)} className="text-white/70 hover:text-white transition-colors">
+            <X size={20} />
+          </button>
+        </div>
 
-          <div className="flex items-center gap-1.5 px-5 py-2.5 bg-muted/30">
-            {scenesMeta.map((_, i) => (
+        {/* Scene indicator */}
+        <div className="flex items-center gap-1.5 px-5 py-2.5 bg-muted/30">
+          {scenesMeta.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => goToScene(i)}
+              className={`h-1 rounded-full flex-1 transition-all duration-300 ${
+                i === currentScene ? "bg-primary" : i < currentScene ? "bg-primary/40" : "bg-border"
+              }`}
+            />
+          ))}
+        </div>
+        <div className="px-5 pb-1">
+          <p className="text-xs text-muted-foreground font-medium">
+            Scene {currentScene + 1}: {scenesMeta[currentScene].title}
+          </p>
+        </div>
+
+        {/* Content */}
+        <div className="px-5 py-4 min-h-[350px] max-h-[400px] overflow-y-auto flex flex-col">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentScene}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="flex-1"
+            >
+              {sceneComponents[currentScene]}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-4 border-t border-border flex items-center justify-between gap-3 bg-muted/20">
+          <div className="flex gap-1.5">
+            {Array.from({ length: totalScenes }).map((_, i) => (
               <button
                 key={i}
                 onClick={() => goToScene(i)}
-                className={`h-1 rounded-full flex-1 transition-all duration-300 ${
-                  i === currentScene ? "bg-primary" : i < currentScene ? "bg-primary/40" : "bg-border"
-                }`}
+                className={`w-2 h-2 rounded-full transition-all ${i === currentScene ? "bg-primary scale-125" : "bg-border"}`}
               />
             ))}
           </div>
-          <div className="px-5 pb-1">
-            <p className="text-xs text-muted-foreground font-medium">
-              Scene {currentScene + 1}: {scenesMeta[currentScene].title}
-            </p>
-          </div>
-
-          <div className="px-5 py-4 min-h-[350px] max-h-[400px] overflow-y-auto flex flex-col">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentScene}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-                className="flex-1"
-              >
-                {sceneComponents[currentScene]}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          <div className="px-5 py-4 border-t border-border flex items-center justify-between gap-3 bg-muted/20">
-            <div className="flex gap-1.5">
-              {Array.from({ length: totalScenes }).map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => goToScene(i)}
-                  className={`w-2 h-2 rounded-full transition-all ${i === currentScene ? "bg-primary scale-125" : "bg-border"}`}
-                />
-              ))}
-            </div>
-            <div className="flex gap-2">
-              {currentScene < totalScenes - 1 && (
-                <Button variant="ghost" size="sm" onClick={() => setCurrentScene((s) => s + 1)}>
-                  Skip →
-                </Button>
-              )}
-              <Button
-                variant="hero"
-                size="sm"
-                onClick={() => {
-                  stop();
-                  onOpenChange(false);
-                  onGetStarted?.();
-                }}
-              >
-                Get Started for Free
+          <div className="flex gap-2">
+            {currentScene < totalScenes - 1 && (
+              <Button variant="ghost" size="sm" onClick={() => setCurrentScene((s) => s + 1)}>
+                Skip →
               </Button>
-            </div>
+            )}
+            <Button
+              variant="hero"
+              size="sm"
+              onClick={() => {
+                onOpenChange(false);
+                onGetStarted?.();
+              }}
+            >
+              Get Started for Free
+            </Button>
           </div>
-        </DialogContent>
-      </Dialog>
-    </SpeechContext.Provider>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
