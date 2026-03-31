@@ -54,7 +54,7 @@ const Terms = () => {
 
           <section className="space-y-3">
             <h2 className="text-xl font-display font-semibold text-foreground">8. Contact Us</h2>
-            <p>For questions about these Terms, contact us at <a href="mailto:contact@briqlabs.ai" className="text-primary hover:underline">contact@briqlabs.ai</a>.</p>
+            <p>For questions about these Terms, contact us at <a href="mailto:hello@briqlabs.com" className="text-primary hover:underline">hello@briqlabs.com</a>.</p>
           </section>
         </div>
       </main>
