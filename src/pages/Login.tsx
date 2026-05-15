@@ -3,7 +3,8 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { lovable } from "@/integrations/lovable";
+//import { lovable } from "@/integrations/lovable";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
@@ -27,7 +28,7 @@ const Login = () => {
   useEffect(() => {
     if (!loading && user) navigate(from, { replace: true });
   }, [loading, user, navigate, from]);
-
+/*
   const signInWithGoogle = async () => {
     setBusy(true);
     try {
@@ -45,7 +46,27 @@ const Login = () => {
       toast.error("Something went wrong");
       setBusy(false);
     }
-  };
+  }; */
+  // ✅ REPLACE WITH THIS
+const signInWithGoogle = async () => {
+  setBusy(true);
+  try {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/agent`,
+      },
+    });
+    if (error) {
+      toast.error("Sign in failed. Please try again.");
+      setBusy(false);
+    }
+    // No navigate() needed — Supabase handles the redirect automatically
+  } catch (e) {
+    toast.error("Something went wrong");
+    setBusy(false);
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background hero-glow px-6">
