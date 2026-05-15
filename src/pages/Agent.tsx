@@ -57,8 +57,8 @@ const Agent = () => {
     }
   };
 
-  const goNext = () => setStep((s) => Math.min(3, (s + 1) as Step));
-  const goBack = () => setStep((s) => Math.max(0, (s - 1) as Step));
+  const goNext = () => setStep((s) => (Math.min(3, s + 1) as Step));
+  const goBack = () => setStep((s) => (Math.max(0, s - 1) as Step));
 
   return (
     <div className="min-h-screen bg-background hero-glow">
