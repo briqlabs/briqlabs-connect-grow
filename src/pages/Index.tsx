@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import ProductsSection from "@/components/ProductsSection";
@@ -9,10 +10,15 @@ import LeadFormDialog from "@/components/LeadFormDialog";
 export type LeadFormOpener = (title?: string) => void;
 
 const Index = () => {
+  const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState("Get Started");
 
   const openForm: LeadFormOpener = (title = "Get Started") => {
+    if (title === "Start Free Trial") {
+      navigate("/agent");
+      return;
+    }
     setDialogTitle(title);
     setDialogOpen(true);
   };
