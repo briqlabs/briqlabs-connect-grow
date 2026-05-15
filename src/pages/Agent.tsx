@@ -1,16 +1,20 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, MessageCircle, Power, Check, ArrowRight, ArrowLeft, Store, FileText, Phone, Sparkles } from "lucide-react";
+import { Upload, MessageCircle, Power, Check, ArrowRight, ArrowLeft, Store, FileText, Phone, Sparkles, LogOut, Settings, LifeBuoy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
+import { useNavigate } from "react-router-dom";
 
 type Step = 0 | 1 | 2 | 3;
 
 const Agent = () => {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [step, setStep] = useState<Step>(0);
   const [businessName, setBusinessName] = useState("");
   const [businessType, setBusinessType] = useState("");
@@ -60,9 +64,65 @@ const Agent = () => {
   const goNext = () => setStep((s) => (Math.min(3, s + 1) as Step));
   const goBack = () => setStep((s) => (Math.max(0, s - 1) as Step));
 
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success("Signed out");
+    navigate("/", { replace: true });
+  };
+
+  const displayName =
+    (user?.user_metadata?.full_name as string) ||
+    (user?.user_metadata?.name as string) ||
+    user?.email ||
+    "Account";
+  const avatarUrl = user?.user_metadata?.avatar_url as string | undefined;
+  const initial = displayName.charAt(0).toUpperCase();
+
   return (
-    <div className="min-h-screen bg-background hero-glow">
-      <header className="border-b border-border">
+    <div className="min-h-screen bg-background hero-glow flex">
+      {/* Sidebar */}
+      <aside className="hidden md:flex flex-col w-64 border-r border-border bg-background/60 backdrop-blur-sm sticky top-0 h-screen">
+        <div className="px-5 h-16 flex items-center gap-2 border-b border-border">
+          <div className="px-3 py-1.5 rounded-xl bg-gradient-to-br from-primary via-accent to-primary font-display font-extrabold text-primary-foreground text-sm">
+            Briqlabs
+          </div>
+          <span className="font-display font-extrabold text-lg text-primary">Agent</span>
+        </div>
+
+        <nav className="flex-1 p-3 space-y-1 text-sm">
+          <a className="flex items-center gap-3 px-3 py-2 rounded-lg bg-muted text-foreground font-medium">
+            <Sparkles size={16} /> Setup
+          </a>
+          <a href="/" className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+            <Settings size={16} /> Home
+          </a>
+          <a href="https://wa.me/919999999999" target="_blank" rel="noreferrer" className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+            <LifeBuoy size={16} /> Help
+          </a>
+        </nav>
+
+        <div className="p-3 border-t border-border space-y-3">
+          <div className="flex items-center gap-3 px-2">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={displayName} className="w-9 h-9 rounded-full object-cover" />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground flex items-center justify-center font-semibold">
+                {initial}
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="text-sm font-medium truncate">{displayName}</p>
+              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+            </div>
+          </div>
+          <Button variant="ghost" size="sm" className="w-full justify-start" onClick={handleSignOut}>
+            <LogOut size={16} /> Sign out
+          </Button>
+        </div>
+      </aside>
+
+      <div className="flex-1 min-w-0">
+      <header className="md:hidden border-b border-border">
         <div className="container mx-auto flex items-center justify-between h-16 px-6">
           <div className="flex items-center gap-2">
             <div className="px-3 py-1.5 rounded-xl bg-gradient-to-br from-primary via-accent to-primary font-display font-extrabold text-primary-foreground text-base">
@@ -70,7 +130,9 @@ const Agent = () => {
             </div>
             <span className="font-display font-extrabold text-xl text-primary">Agent</span>
           </div>
-          <a href="/" className="text-sm text-muted-foreground hover:text-foreground">Help</a>
+          <Button variant="ghost" size="sm" onClick={handleSignOut}>
+            <LogOut size={16} /> Sign out
+          </Button>
         </div>
       </header>
 
@@ -321,6 +383,7 @@ const Agent = () => {
           Need help? WhatsApp us at <a href="https://wa.me/919999999999" className="text-primary hover:underline">support</a>
         </p>
       </main>
+      </div>
     </div>
   );
 };
