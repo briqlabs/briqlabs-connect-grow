@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, MessageCircle, Power, Check, ArrowRight, ArrowLeft, Store, FileText, Phone, Sparkles, LogOut, Settings, LifeBuoy } from "lucide-react";
+//import { Upload, MessageCircle, Power, Check, ArrowRight, ArrowLeft, Store, FileText, Phone, Sparkles, LogOut, Settings, LifeBuoy } from "lucide-react";
+import { Upload, MessageCircle, Power, Check, ArrowRight, ArrowLeft, Store, FileText, QrCode, Sparkles, LogOut, Settings, LifeBuoy, RefreshCw, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,12 +21,18 @@ const Agent = () => {
   const [businessType, setBusinessType] = useState("");
   const [businessInfo, setBusinessInfo] = useState("");
   const [fileName, setFileName] = useState("");
+  /*
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [whatsappConnected, setWhatsappConnected] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [aiOn, setAiOn] = useState(false);
-
+*/
+  const [phone, setPhone] = useState("");
+  const [whatsappConnected, setWhatsappConnected] = useState(false);
+  const [qrExpired, setQrExpired] = useState(false);
+  const [aiOn, setAiOn] = useState(false);
+  
   const steps = [
     { label: "Business Info", icon: Store },
     { label: "Connect WhatsApp", icon: MessageCircle },
@@ -35,20 +42,30 @@ const Agent = () => {
   const canNextFrom0 = businessName.trim().length > 1 && businessType.trim().length > 1 && (businessInfo.trim().length > 5 || fileName);
   const canNextFrom1 = whatsappConnected;
 
-  const handleSendOtp = () => {
+  /*const handleSendOtp = () => {
     if (phone.replace(/\D/g, "").length < 10) {
       toast.error("Please enter a valid phone number");
       return;
     }
     setOtpSent(true);
     toast.success("OTP sent to your WhatsApp number");
-  };
-
+  }; */
+/*
   const handleVerify = () => {
     if (otp.length < 4) {
       toast.error("Enter the 6-digit OTP");
       return;
     }
+    setWhatsappConnected(true);
+    toast.success("WhatsApp connected successfully");
+  };
+  */
+    const handleRefreshQr = () => {
+    setQrExpired(false);
+    toast.success("QR code refreshed");
+  };
+
+  const handleSimulateConnect = () => {
     setWhatsappConnected(true);
     toast.success("WhatsApp connected successfully");
   };
@@ -224,6 +241,7 @@ const Agent = () => {
               </div>
             </motion.div>
           )}
+          
 
           {step === 1 && (
             <motion.div
@@ -237,38 +255,49 @@ const Agent = () => {
                 <MessageCircle className="text-primary" />
                 <h1 className="text-2xl font-display font-bold">Connect your WhatsApp</h1>
               </div>
-              <p className="text-muted-foreground mb-6">We'll send a one-time code to verify your number.</p>
+              <p className="text-muted-foreground mb-6">Scan the QR code with your WhatsApp app to link your account.</p>
 
               {!whatsappConnected ? (
-                <div className="space-y-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">WhatsApp number</Label>
-                    <div className="flex gap-2">
-                      <div className="flex items-center px-3 rounded-md border border-input bg-muted text-sm font-medium">
-                        <Phone size={14} className="mr-1" /> +91
-                      </div>
-                      <Input id="phone" type="tel" placeholder="98XXXXXXXX" value={phone} onChange={(e) => setPhone(e.target.value)} disabled={otpSent} />
+                <div className="space-y-6">
+                  {/* QR Code Display */}
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="relative w-56 h-56 rounded-2xl border-2 border-border bg-white flex items-center justify-center shadow-sm">
+                      {qrExpired ? (
+                        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+                          <QrCode size={48} className="opacity-30" />
+                          <p className="text-sm font-medium">QR code expired</p>
+                          <Button variant="outline" size="sm" onClick={handleRefreshQr}>
+                            <RefreshCw size={14} /> Refresh
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-2">
+                          {/* Placeholder QR — replace with real QR image/component */}
+                          <QrCode size={160} className="text-foreground" strokeWidth={1.2} />
+                        </div>
+                      )}
                     </div>
+                    <p className="text-xs text-muted-foreground">QR code expires in 60 seconds</p>
                   </div>
 
-                  {!otpSent ? (
-                    <Button variant="hero" className="w-full" size="lg" onClick={handleSendOtp}>
-                      Send OTP on WhatsApp
-                    </Button>
-                  ) : (
-                    <>
-                      <div className="space-y-2">
-                        <Label htmlFor="otp">Enter OTP</Label>
-                        <Input id="otp" inputMode="numeric" maxLength={6} placeholder="6-digit code" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))} />
-                        <button type="button" className="text-xs text-muted-foreground hover:text-foreground" onClick={handleSendOtp}>
-                          Resend OTP
-                        </button>
-                      </div>
-                      <Button variant="hero" className="w-full" size="lg" onClick={handleVerify}>
-                        Verify & Connect
-                      </Button>
-                    </>
-                  )}
+                  {/* Instructions */}
+                  <div className="rounded-xl bg-muted/40 border border-border p-4 space-y-3">
+                    <p className="text-sm font-semibold flex items-center gap-2"><Smartphone size={15} className="text-primary" /> How to scan</p>
+                    <ol className="space-y-2 text-sm text-muted-foreground list-none">
+                      <li className="flex items-start gap-2"><span className="w-5 h-5 rounded-full bg-primary/15 text-primary text-xs flex items-center justify-center font-bold flex-shrink-0 mt-0.5">1</span>Open WhatsApp on your phone</li>
+                      <li className="flex items-start gap-2"><span className="w-5 h-5 rounded-full bg-primary/15 text-primary text-xs flex items-center justify-center font-bold flex-shrink-0 mt-0.5">2</span>Go to <strong>Settings → Linked Devices → Link a Device</strong></li>
+                      <li className="flex items-start gap-2"><span className="w-5 h-5 rounded-full bg-primary/15 text-primary text-xs flex items-center justify-center font-bold flex-shrink-0 mt-0.5">3</span>Point your camera at the QR code above</li>
+                    </ol>
+                  </div>
+
+                  {/* Dev/demo shortcut — remove in production */}
+                  <button
+                    type="button"
+                    className="w-full text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 text-center"
+                    onClick={handleSimulateConnect}
+                  >
+                    Simulate successful scan (demo only)
+                  </button>
                 </div>
               ) : (
                 <div className="rounded-xl bg-primary/10 border border-primary/30 p-5 flex items-center gap-3">
@@ -277,7 +306,7 @@ const Agent = () => {
                   </div>
                   <div>
                     <p className="font-semibold">WhatsApp connected</p>
-                    <p className="text-sm text-muted-foreground">+91 {phone}</p>
+                    <p className="text-sm text-muted-foreground">Your account is linked via QR</p>
                   </div>
                 </div>
               )}
@@ -292,6 +321,8 @@ const Agent = () => {
               </div>
             </motion.div>
           )}
+
+
 
           {step === 2 && (
             <motion.div
