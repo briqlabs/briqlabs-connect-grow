@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, MessageCircle, Power, Check, ArrowRight, ArrowLeft, Store, FileText, Phone, Sparkles, LogOut, Settings, LifeBuoy } from "lucide-react";
+import { Upload, MessageCircle, Power, Check, ArrowRight, ArrowLeft, Store, FileText, Sparkles, LogOut, Settings, LifeBuoy, QrCode, RefreshCw, Smartphone, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 type Step = 0 | 1 | 2 | 3;
 
@@ -20,11 +21,13 @@ const Agent = () => {
   const [businessType, setBusinessType] = useState("");
   const [businessInfo, setBusinessInfo] = useState("");
   const [fileName, setFileName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
   const [whatsappConnected, setWhatsappConnected] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
   const [aiOn, setAiOn] = useState(false);
+  const [qr, setQr] = useState<string | null>(null);
+  const [qrLoading, setQrLoading] = useState(false);
+  const [qrError, setQrError] = useState<string | null>(null);
+  const pollRef = useRef<number | null>(null);
+  const refreshRef = useRef<number | null>(null);
 
   const steps = [
     { label: "Business Info", icon: Store },
@@ -35,23 +38,60 @@ const Agent = () => {
   const canNextFrom0 = businessName.trim().length > 1 && businessType.trim().length > 1 && (businessInfo.trim().length > 5 || fileName);
   const canNextFrom1 = whatsappConnected;
 
-  const handleSendOtp = () => {
-    if (phone.replace(/\D/g, "").length < 10) {
-      toast.error("Please enter a valid phone number");
-      return;
+  const fetchQr = async () => {
+    setQrLoading(true);
+    setQrError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("whatsapp-qr", {
+        body: { action: "connect" },
+      });
+      if (error) throw error;
+      if (data?.state === "open") {
+        setWhatsappConnected(true);
+        setQr(null);
+      } else if (data?.qr) {
+        const src = data.qr.startsWith("data:") ? data.qr : `data:image/png;base64,${data.qr}`;
+        setQr(src);
+      } else {
+        setQrError("Couldn't fetch a QR code. Please try again.");
+      }
+    } catch (e: any) {
+      setQrError(e?.message ?? "Failed to load QR code");
+    } finally {
+      setQrLoading(false);
     }
-    setOtpSent(true);
-    toast.success("OTP sent to your WhatsApp number");
   };
 
-  const handleVerify = () => {
-    if (otp.length < 4) {
-      toast.error("Enter the 6-digit OTP");
-      return;
+  const pollStatus = async () => {
+    try {
+      const { data } = await supabase.functions.invoke("whatsapp-qr", {
+        body: { action: "status" },
+      });
+      if (data?.state === "open") {
+        setWhatsappConnected(true);
+        setQr(null);
+        toast.success("WhatsApp connected successfully");
+        if (pollRef.current) window.clearInterval(pollRef.current);
+        if (refreshRef.current) window.clearInterval(refreshRef.current);
+      }
+    } catch {
+      // silent
     }
-    setWhatsappConnected(true);
-    toast.success("WhatsApp connected successfully");
   };
+
+  // Start QR flow when entering step 1
+  useEffect(() => {
+    if (step !== 1 || whatsappConnected) return;
+    fetchQr();
+    pollRef.current = window.setInterval(pollStatus, 3000);
+    // Evolution QR expires ~40s; refresh every 30s
+    refreshRef.current = window.setInterval(fetchQr, 30000);
+    return () => {
+      if (pollRef.current) window.clearInterval(pollRef.current);
+      if (refreshRef.current) window.clearInterval(refreshRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, whatsappConnected]);
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -237,49 +277,104 @@ const Agent = () => {
                 <MessageCircle className="text-primary" />
                 <h1 className="text-2xl font-display font-bold">Connect your WhatsApp</h1>
               </div>
-              <p className="text-muted-foreground mb-6">We'll send a one-time code to verify your number.</p>
+              <p className="text-muted-foreground mb-6">Scan the QR code below with WhatsApp on your phone — no codes, no typing.</p>
 
               {!whatsappConnected ? (
-                <div className="space-y-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">WhatsApp number</Label>
-                    <div className="flex gap-2">
-                      <div className="flex items-center px-3 rounded-md border border-input bg-muted text-sm font-medium">
-                        <Phone size={14} className="mr-1" /> +91
+                <div className="grid md:grid-cols-[auto,1fr] gap-8 items-start">
+                  {/* QR card */}
+                  <div className="flex flex-col items-center">
+                    <div className="relative p-[2px] rounded-3xl bg-gradient-to-br from-primary via-accent to-primary shadow-xl shadow-primary/20">
+                      <div className="relative w-64 h-64 rounded-[22px] bg-white flex items-center justify-center overflow-hidden">
+                        {/* corner brackets */}
+                        <span className="absolute top-2 left-2 w-5 h-5 border-t-2 border-l-2 border-primary rounded-tl-md" />
+                        <span className="absolute top-2 right-2 w-5 h-5 border-t-2 border-r-2 border-primary rounded-tr-md" />
+                        <span className="absolute bottom-2 left-2 w-5 h-5 border-b-2 border-l-2 border-primary rounded-bl-md" />
+                        <span className="absolute bottom-2 right-2 w-5 h-5 border-b-2 border-r-2 border-primary rounded-br-md" />
+
+                        {qrLoading && !qr && (
+                          <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                            <Loader2 className="animate-spin" />
+                            <span className="text-xs">Generating secure QR…</span>
+                          </div>
+                        )}
+                        {qr && (
+                          <>
+                            <img src={qr} alt="WhatsApp QR code" className="w-[88%] h-[88%] object-contain" />
+                            {/* scanning shimmer */}
+                            <motion.div
+                              aria-hidden
+                              initial={{ y: "-100%" }}
+                              animate={{ y: "100%" }}
+                              transition={{ duration: 2.2, repeat: Infinity, ease: "linear" }}
+                              className="pointer-events-none absolute inset-x-4 h-10 bg-gradient-to-b from-transparent via-primary/25 to-transparent blur-sm"
+                            />
+                          </>
+                        )}
+                        {!qrLoading && !qr && qrError && (
+                          <div className="flex flex-col items-center gap-2 text-center px-4">
+                            <QrCode className="text-muted-foreground" />
+                            <span className="text-xs text-destructive">{qrError}</span>
+                          </div>
+                        )}
                       </div>
-                      <Input id="phone" type="tel" placeholder="98XXXXXXXX" value={phone} onChange={(e) => setPhone(e.target.value)} disabled={otpSent} />
                     </div>
+
+                    <div className="mt-4 flex items-center gap-2">
+                      <span className="relative flex h-2 w-2">
+                        <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-75 animate-ping" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+                      </span>
+                      <p className="text-xs text-muted-foreground">Waiting for you to scan…</p>
+                    </div>
+
+                    <Button variant="ghost" size="sm" className="mt-2" onClick={fetchQr} disabled={qrLoading}>
+                      <RefreshCw size={14} className={qrLoading ? "animate-spin" : ""} /> Refresh QR code
+                    </Button>
                   </div>
 
-                  {!otpSent ? (
-                    <Button variant="hero" className="w-full" size="lg" onClick={handleSendOtp}>
-                      Send OTP on WhatsApp
-                    </Button>
-                  ) : (
-                    <>
-                      <div className="space-y-2">
-                        <Label htmlFor="otp">Enter OTP</Label>
-                        <Input id="otp" inputMode="numeric" maxLength={6} placeholder="6-digit code" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))} />
-                        <button type="button" className="text-xs text-muted-foreground hover:text-foreground" onClick={handleSendOtp}>
-                          Resend OTP
-                        </button>
-                      </div>
-                      <Button variant="hero" className="w-full" size="lg" onClick={handleVerify}>
-                        Verify & Connect
-                      </Button>
-                    </>
-                  )}
+                  {/* Instructions */}
+                  <div className="space-y-5">
+                    <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-primary">
+                      <Smartphone size={16} /> Scan in 4 steps
+                    </div>
+                    <ol className="space-y-3">
+                      {[
+                        <>Open <strong className="text-foreground">WhatsApp</strong> on your phone</>,
+                        <>Tap <strong className="text-foreground">Menu (⋮)</strong> on Android or <strong className="text-foreground">Settings</strong> on iPhone</>,
+                        <>Choose <strong className="text-foreground">Linked devices → Link a device</strong></>,
+                        <>Point your phone at this screen to scan the QR</>,
+                      ].map((text, i) => (
+                        <li key={i} className="flex items-start gap-3 text-sm text-muted-foreground">
+                          <span className="shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center mt-0.5">
+                            {i + 1}
+                          </span>
+                          <span className="leading-relaxed">{text}</span>
+                        </li>
+                      ))}
+                    </ol>
+
+                    <div className="rounded-xl bg-gradient-to-br from-primary/10 to-accent/5 border border-primary/20 p-4 text-xs text-muted-foreground flex items-start gap-3">
+                      <RefreshCw size={14} className="text-primary mt-0.5 shrink-0" />
+                      <span>
+                        The QR refreshes every 30 seconds for security. Your session is end-to-end private — we never see your messages.
+                      </span>
+                    </div>
+                  </div>
                 </div>
               ) : (
-                <div className="rounded-xl bg-primary/10 border border-primary/30 p-5 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
-                    <Check size={20} />
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="rounded-2xl bg-gradient-to-br from-primary/15 via-accent/10 to-primary/5 border border-primary/30 p-6 flex items-center gap-4"
+                >
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/30">
+                    <Check size={24} />
                   </div>
                   <div>
-                    <p className="font-semibold">WhatsApp connected</p>
-                    <p className="text-sm text-muted-foreground">+91 {phone}</p>
+                    <p className="font-semibold text-lg">WhatsApp connected</p>
+                    <p className="text-sm text-muted-foreground">Your number is linked and ready to receive AI replies.</p>
                   </div>
-                </div>
+                </motion.div>
               )}
 
               <div className="flex justify-between mt-8">
@@ -363,14 +458,9 @@ const Agent = () => {
               </motion.div>
               <h1 className="text-3xl font-display font-bold mb-2">You're all set!</h1>
               <p className="text-muted-foreground mb-6">
-                Your AI assistant is now live on WhatsApp. Send a test message to <strong>+91 {phone}</strong> to try it out.
+                Your AI assistant is now live on WhatsApp. Send a message to your linked number to try it out.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button variant="hero" size="lg" asChild>
-                  <a href={`https://wa.me/91${phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">
-                    Send a test message
-                  </a>
-                </Button>
                 <Button variant="hero-outline" size="lg" onClick={() => { setStep(0); setAiOn(false); }}>
                   Edit setup
                 </Button>
