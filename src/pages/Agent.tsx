@@ -277,61 +277,104 @@ const Agent = () => {
                 <MessageCircle className="text-primary" />
                 <h1 className="text-2xl font-display font-bold">Connect your WhatsApp</h1>
               </div>
-              <p className="text-muted-foreground mb-6">Scan this QR code with WhatsApp on your phone to link your account.</p>
+              <p className="text-muted-foreground mb-6">Scan the QR code below with WhatsApp on your phone — no codes, no typing.</p>
 
               {!whatsappConnected ? (
-                <div className="grid md:grid-cols-2 gap-6 items-center">
+                <div className="grid md:grid-cols-[auto,1fr] gap-8 items-start">
+                  {/* QR card */}
                   <div className="flex flex-col items-center">
-                    <div className="relative w-64 h-64 rounded-2xl border border-border bg-white p-3 flex items-center justify-center overflow-hidden">
-                      {qrLoading && !qr && (
-                        <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                          <Loader2 className="animate-spin" />
-                          <span className="text-xs">Generating QR…</span>
-                        </div>
-                      )}
-                      {qr && (
-                        <img src={qr} alt="WhatsApp QR code" className="w-full h-full object-contain" />
-                      )}
-                      {!qrLoading && !qr && qrError && (
-                        <div className="flex flex-col items-center gap-2 text-center px-4">
-                          <QrCode className="text-muted-foreground" />
-                          <span className="text-xs text-destructive">{qrError}</span>
-                        </div>
-                      )}
+                    <div className="relative p-[2px] rounded-3xl bg-gradient-to-br from-primary via-accent to-primary shadow-xl shadow-primary/20">
+                      <div className="relative w-64 h-64 rounded-[22px] bg-white flex items-center justify-center overflow-hidden">
+                        {/* corner brackets */}
+                        <span className="absolute top-2 left-2 w-5 h-5 border-t-2 border-l-2 border-primary rounded-tl-md" />
+                        <span className="absolute top-2 right-2 w-5 h-5 border-t-2 border-r-2 border-primary rounded-tr-md" />
+                        <span className="absolute bottom-2 left-2 w-5 h-5 border-b-2 border-l-2 border-primary rounded-bl-md" />
+                        <span className="absolute bottom-2 right-2 w-5 h-5 border-b-2 border-r-2 border-primary rounded-br-md" />
+
+                        {qrLoading && !qr && (
+                          <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                            <Loader2 className="animate-spin" />
+                            <span className="text-xs">Generating secure QR…</span>
+                          </div>
+                        )}
+                        {qr && (
+                          <>
+                            <img src={qr} alt="WhatsApp QR code" className="w-[88%] h-[88%] object-contain" />
+                            {/* scanning shimmer */}
+                            <motion.div
+                              aria-hidden
+                              initial={{ y: "-100%" }}
+                              animate={{ y: "100%" }}
+                              transition={{ duration: 2.2, repeat: Infinity, ease: "linear" }}
+                              className="pointer-events-none absolute inset-x-4 h-10 bg-gradient-to-b from-transparent via-primary/25 to-transparent blur-sm"
+                            />
+                          </>
+                        )}
+                        {!qrLoading && !qr && qrError && (
+                          <div className="flex flex-col items-center gap-2 text-center px-4">
+                            <QrCode className="text-muted-foreground" />
+                            <span className="text-xs text-destructive">{qrError}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <Button variant="ghost" size="sm" className="mt-3" onClick={fetchQr} disabled={qrLoading}>
-                      <RefreshCw size={14} className={qrLoading ? "animate-spin" : ""} /> Refresh QR
+
+                    <div className="mt-4 flex items-center gap-2">
+                      <span className="relative flex h-2 w-2">
+                        <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-75 animate-ping" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+                      </span>
+                      <p className="text-xs text-muted-foreground">Waiting for you to scan…</p>
+                    </div>
+
+                    <Button variant="ghost" size="sm" className="mt-2" onClick={fetchQr} disabled={qrLoading}>
+                      <RefreshCw size={14} className={qrLoading ? "animate-spin" : ""} /> Refresh QR code
                     </Button>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-1">
-                      <Loader2 size={12} className="animate-spin" /> Waiting for scan…
-                    </p>
                   </div>
 
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-sm font-semibold">
-                      <Smartphone size={16} className="text-primary" /> How to scan
+                  {/* Instructions */}
+                  <div className="space-y-5">
+                    <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-primary">
+                      <Smartphone size={16} /> Scan in 4 steps
                     </div>
-                    <ol className="space-y-3 text-sm text-muted-foreground list-decimal list-inside">
-                      <li>Open <strong className="text-foreground">WhatsApp</strong> on your phone</li>
-                      <li>Tap <strong className="text-foreground">Menu</strong> (⋮) or <strong className="text-foreground">Settings</strong></li>
-                      <li>Tap <strong className="text-foreground">Linked devices → Link a device</strong></li>
-                      <li>Point your phone at this screen to scan the code</li>
+                    <ol className="space-y-3">
+                      {[
+                        <>Open <strong className="text-foreground">WhatsApp</strong> on your phone</>,
+                        <>Tap <strong className="text-foreground">Menu (⋮)</strong> on Android or <strong className="text-foreground">Settings</strong> on iPhone</>,
+                        <>Choose <strong className="text-foreground">Linked devices → Link a device</strong></>,
+                        <>Point your phone at this screen to scan the QR</>,
+                      ].map((text, i) => (
+                        <li key={i} className="flex items-start gap-3 text-sm text-muted-foreground">
+                          <span className="shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center mt-0.5">
+                            {i + 1}
+                          </span>
+                          <span className="leading-relaxed">{text}</span>
+                        </li>
+                      ))}
                     </ol>
-                    <div className="rounded-lg bg-muted/40 border border-border p-3 text-xs text-muted-foreground">
-                      The QR refreshes automatically every 30 seconds. Your session stays private and secure.
+
+                    <div className="rounded-xl bg-gradient-to-br from-primary/10 to-accent/5 border border-primary/20 p-4 text-xs text-muted-foreground flex items-start gap-3">
+                      <RefreshCw size={14} className="text-primary mt-0.5 shrink-0" />
+                      <span>
+                        The QR refreshes every 30 seconds for security. Your session is end-to-end private — we never see your messages.
+                      </span>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="rounded-xl bg-primary/10 border border-primary/30 p-5 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
-                    <Check size={20} />
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="rounded-2xl bg-gradient-to-br from-primary/15 via-accent/10 to-primary/5 border border-primary/30 p-6 flex items-center gap-4"
+                >
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/30">
+                    <Check size={24} />
                   </div>
                   <div>
-                    <p className="font-semibold">WhatsApp connected</p>
-                    <p className="text-sm text-muted-foreground">Your number is linked and ready.</p>
+                    <p className="font-semibold text-lg">WhatsApp connected</p>
+                    <p className="text-sm text-muted-foreground">Your number is linked and ready to receive AI replies.</p>
                   </div>
-                </div>
+                </motion.div>
               )}
 
               <div className="flex justify-between mt-8">
