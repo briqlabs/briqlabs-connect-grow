@@ -25,8 +25,8 @@ const POLL_INTERVAL_MS = 3_000;   // check connection status every 3 s
 const QR_TTL_MS        = 60_000;  // QR code lifetime before we auto-refresh
 
 async function callEdge(action: string) {
-  const res = await supabase.functions.invoke("evolution-whatsapp", {
-    body: { action },
+  const res = await supabase.functions.invoke("create-whatsapp-instance", {
+    body: { userId: user.id, },
   });
   if (res.error) throw new Error(res.error.message ?? String(res.error));
   return res.data as Record<string, unknown>;
