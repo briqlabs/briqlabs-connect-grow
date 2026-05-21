@@ -1,73 +1,138 @@
-# Welcome to your Lovable project
+# Hi, I'm Harish 👋
 
-## Project info
+Staff Product Manager building AI products for real-world business operations.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+Currently building **Briqlabs** — AI agents for small businesses in India that automate:
+- WhatsApp lead management
+- Voice call lead qualification
+- Customer follow-ups
+- Appointment booking
+- Sales workflows
 
-## How can I edit this code?
+I work at the intersection of:
+- AI Agents
+- Product Strategy
+- Automation
+- Conversational AI
+- SMB SaaS
+- Growth Systems
 
-There are several ways of editing your application.
+---
 
-**Use Lovable**
+## 🚀 What I'm Building
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+### Briqlabs
+AI-powered business automation for Indian SMBs.
 
-Changes made via Lovable will be committed automatically to this repo.
+Our agents help businesses:
+- Respond instantly to inbound leads
+- Automate WhatsApp conversations
+- Handle missed calls intelligently
+- Qualify leads using AI voice agents
+- Reduce manual follow-ups
+- Increase conversion rates
 
-**Use your preferred IDE**
+Focused on solving operational inefficiencies for:
+- Local service businesses
+- Clinics
+- Real estate teams
+- Education institutes
+- SMB sales teams
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🧠 Product Philosophy
 
-Follow these steps:
+I believe great AI products should:
+- Solve operational pain, not just generate text
+- Work reliably in low-tech business environments
+- Be measurable through business outcomes
+- Reduce repetitive human workflows
+- Feel simple despite complex systems underneath
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+---
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## 🛠️ Skills & Areas
 
-# Step 3: Install the necessary dependencies.
-npm i
+### Product
+- Product Strategy
+- AI Product Management
+- User Research
+- Roadmapping
+- GTM Planning
+- Growth Experiments
+- Analytics & Funnel Optimization
+- Conversational UX
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+### AI & Automation
+- AI Agents
+- LLM Workflows
+- Prompt Engineering
+- Voice AI Systems
+- WhatsApp Automation
+- CRM Automation
+- RAG Systems
+- Multi-step Agent Flows
 
-**Edit a file directly in GitHub**
+### Tools
+- OpenAI APIs
+- Supabase
+- Firebase
+- SQL
+- Jira
+- Figma
+- GitHub Actions
+- Zapier / n8n
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+---
 
-**Use GitHub Codespaces**
+## 📌 Current Focus
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- AI voice agents for lead qualification
+- WhatsApp-first business automation
+- Multi-agent workflows
+- AI copilots for SMB operations
+- Agent memory & context systems
+- Scalable AI workflows for Indian businesses
 
-## What technologies are used for this project?
+---
 
-This project is built with:
+## 📈 What Interests Me
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- Agentic AI
+- Vertical AI SaaS
+- Conversational commerce
+- AI-native workflows
+- SMB digitization in India
+- Product-led AI experiences
 
-## How can I deploy this project?
+---
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## 📝 What You'll Find Here
 
-## Can I connect a custom domain to my Lovable project?
+This GitHub includes:
+- Product specs & PRDs
+- AI workflow experiments
+- Automation prototypes
+- Voice AI concepts
+- Product thinking docs
+- AI system architecture notes
+- GTM experiments
+- Side projects & MVPs
 
-Yes, you can!
+---
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 🤝 Let's Connect
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- LinkedIn - https://www.linkedin.com/in/harish-kumar/
+- Email - harishkumar.iitm@gmail.com
+
+Always interested in conversations around:
+- AI products
+- SMB automation
+- Voice AI
+- Agent workflows
+- Product strategy
+
+---
+⭐ Building practical AI systems that help businesses operate better.
