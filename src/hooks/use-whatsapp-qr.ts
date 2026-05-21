@@ -75,7 +75,11 @@ export function useWhatsAppQR(): UseWhatsAppQRResult {
       setStatus("loading");
       setError(null);
       const data = await callEdge("get_qr");
-      const qr = data.qrBase64 as string | undefined;
+     // const qr = data.qrBase64 as string | undefined;
+      const qr =
+      (data.qrBase64 as string) ||
+      (data.base64 as string) ||
+        null;
       if (qr) {
         setQrBase64(qr);
         setStatus("qr_ready");
