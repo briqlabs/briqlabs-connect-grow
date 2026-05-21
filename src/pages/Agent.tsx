@@ -201,8 +201,8 @@ const Agent = () => {
                 <Store className="text-primary" />
                 <h1 className="text-2xl font-display font-bold">Tell us about your business</h1>
               </div>
-              <p className="text-muted-foreground mb-6">Your AI assistant will use this to answer customers.</p>
-
+           //   <p className="text-muted-foreground mb-6">Your AI assistant will use this to answer customers.</p>
+                <p className="text-muted-foreground mb-6">Your AI assistant is now live on WhatsApp. Send a message to your linked number to try it out. </p>
               <div className="space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="bn">Business name</Label>
@@ -398,9 +398,11 @@ const Agent = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button variant="hero" size="lg" asChild>
-                  <a href={`https://wa.me/91${phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">
-                    Send a test message
-                  </a>
+               //   <a href={`https://wa.me/91${phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">
+                    <a href="https://wa.me/" target="_blank" rel="noopener noreferrer">
+
+                 //   Send a test message
+                  </a> 
                 </Button>
                 <Button variant="hero-outline" size="lg" onClick={() => { setStep(0); setAiOn(false); }}>
                   Edit setup
