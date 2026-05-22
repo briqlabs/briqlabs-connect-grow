@@ -70,31 +70,26 @@ export function useWhatsAppQR(): UseWhatsAppQRResult {
     }, POLL_INTERVAL_MS);
   }, [stopPolling]);
 
-  const refresh = useCallback(async () => {
-    try {
-      setStatus("loading");
-      setError(null);
-      const data = await callEdge("get_qr");
-     // const qr = data.qrBase64 as string | undefined;
-      const qr =
-      (data.qrBase64 as string) ||
-      (data.base64 as string) ||
-        null;
-      if (qr) {
-        setQrBase64(qr);
-        setStatus("qr_ready");
-        // Schedule next auto-refresh
-        if (qrTimerRef.current) clearTimeout(qrTimerRef.current);
-        qrTimerRef.current = setTimeout(() => refresh(), QR_TTL_MS);
-      } else {
-        await initInstance();
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+ const refresh = useCallback(async () => {
+  try {
+    setStatus("loading");
+    setError(null);
+    const data = await callEdge("get_qr");
+    const qr = (data.qrBase64 as string) || (data.base64 as string) || null;
+    if (qr) {
+      setQrBase64(qr);
+      setStatus("qr_ready");
+      if (qrTimerRef.current) clearTimeout(qrTimerRef.current);
+      qrTimerRef.current = setTimeout(() => refresh(), QR_TTL_MS);
+    } else {
       setStatus("error");
+      setError("QR expired or unavailable. Click refresh to try again.");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  } catch (e) {
+    setError(e instanceof Error ? e.message : String(e));
+    setStatus("error");
+  }
+}, []);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const initInstance = useCallback(async () => {
