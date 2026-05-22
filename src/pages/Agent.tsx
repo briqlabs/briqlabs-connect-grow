@@ -15,6 +15,7 @@ import { toast }    from "sonner";
 import { useAuth }  from "@/hooks/use-auth";
 import { useNavigate } from "react-router-dom";
 import { useWhatsAppQR } from "@/hooks/use-whatsapp-qr";
+import { supabase } from "@/integrations/supabase/client";
 
 type Step = 0 | 1 | 2 | 3;
 
@@ -133,6 +134,8 @@ const Agent = () => {
   const [businessType, setBusinessType] = useState("");
   const [businessInfo, setBusinessInfo] = useState("");
   const [fileName,     setFileName]     = useState("");
+  const [file,         setFile]         = useState<File | null>(null);
+  const [saving,       setSaving]       = useState(false);
   const [whatsappConnected, setWhatsappConnected] = useState(false);
   const [aiOn, setAiOn] = useState(false);
 
@@ -150,10 +153,33 @@ const Agent = () => {
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
-    if (f) { setFileName(f.name); toast.success(`Uploaded ${f.name}`); }
+    if (f) { setFile(f); setFileName(f.name); toast.success(`Selected ${f.name}`); }
   };
 
   const goNext = () => setStep((s) => Math.min(3, s + 1) as Step);
+
+  const saveBusinessProfile = async () => {
+    setSaving(true);
+    try {
+      const form = new FormData();
+      form.append("business_name", businessName);
+      form.append("business_type", businessType);
+      form.append("business_info", businessInfo);
+      if (file) form.append("file", file);
+
+      const { data, error } = await supabase.functions.invoke("save-business-profile", {
+        body: form,
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success("Business info saved");
+      goNext();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to save business info");
+    } finally {
+      setSaving(false);
+    }
+  };
   const goBack = () => setStep((s) => Math.max(0, s - 1) as Step);
 
   const handleSignOut = async () => {
@@ -302,8 +328,8 @@ const Agent = () => {
                 </div>
 
                 <div className="flex justify-end mt-8">
-                  <Button variant="hero" size="lg" disabled={!canNextFrom0} onClick={goNext}>
-                    Next <ArrowRight size={16} />
+                  <Button variant="hero" size="lg" disabled={!canNextFrom0 || saving} onClick={saveBusinessProfile}>
+                    {saving ? "Saving…" : "Next"} <ArrowRight size={16} />
                   </Button>
                 </div>
               </motion.div>
