@@ -87,7 +87,10 @@ export function useWhatsAppQR(): UseWhatsAppQRResult {
         if (qrTimerRef.current) clearTimeout(qrTimerRef.current);
         qrTimerRef.current = setTimeout(() => refresh(), QR_TTL_MS);
       } else {
-        await initInstance();
+        // QR not ready yet — just show error, don't re-init
+        setStatus("error");
+        setError("QR expired or unavailable. Click refresh to try again.");
+            }
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
