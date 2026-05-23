@@ -20,18 +20,10 @@ async function callEdge(action: string) {
   });
 
   if (error) {
-    let message = error.message || "Failed to call create-whatsapp-instance";
-    const maybeContext = (error as { context?: unknown }).context;
-    if (maybeContext instanceof Response) {
-      try {
-        const payload = await maybeContext.json();
-        if (payload?.error && typeof payload.error === "string") {
-          message = payload.error;
-        }
-      } catch {
-        // keep original message
-      }
-    }
+    const message =
+      (error as { context?: { error?: string } })?.context?.error ||
+      error.message ||
+      "Failed to call create-whatsapp-instance";
     throw new Error(message);
   }
 
@@ -98,8 +90,7 @@ export function useWhatsAppQR(): UseWhatsAppQRResult {
           setError("WhatsApp disconnected. Please refresh the QR code.");
         }
       } catch {
-
-      // transient network issue, keep polling
+        // transient network issue, keep polling
       }
     }, POLL_INTERVAL_MS);
   }, [stopPolling]);
@@ -132,9 +123,3 @@ export function useWhatsAppQR(): UseWhatsAppQRResult {
 
   return { status, qrBase64, connected, error, refresh };
 }
-
-
-
-
-
-      
