@@ -801,7 +801,7 @@ const Agent = () => {
                         </div>
                       </div>
                     ))
-                  ))}
+                  )}
                 </div>
 
                 <div className="flex justify-between mt-8">
