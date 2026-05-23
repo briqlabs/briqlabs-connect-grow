@@ -820,27 +820,79 @@ const Agent = () => {
               <motion.div
                 key="step-3"
                 initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-                className="glass rounded-2xl p-10 text-center"
+                className="space-y-6"
               >
-                <motion.div
-                  initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.1 }}
-                  className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center mb-5"
-                >
-                  <Check size={40} className="text-primary-foreground" />
-                </motion.div>
-                <h1 className="text-3xl font-display font-bold mb-2">You're all set!</h1>
-                <p className="text-muted-foreground mb-6">
-                  Your AI assistant is now live on WhatsApp. Send a message to your linked number to try it out.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <Button variant="hero" size="lg" asChild>
-                    <a href="https://wa.me/" target="_blank" rel="noopener noreferrer">
-                      Send a test message
-                    </a>
-                  </Button>
-                  <Button variant="hero-outline" size="lg" onClick={() => { setStep(0); setAiOn(false); setWhatsappConnected(false); }}>
-                    Edit setup
-                  </Button>
+                <div className="rounded-3xl bg-gradient-to-r from-primary to-accent p-8 text-primary-foreground">
+                  <h1 className="text-4xl font-display font-extrabold mb-3">Welcome Back!</h1>
+                  <p className="text-lg/8 text-primary-foreground/90 max-w-3xl">
+                    Manage your business knowledge, files, WhatsApp connectivity, and AI bots from one place.
+                  </p>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="rounded-2xl border border-border bg-card p-5">
+                    <div className="w-12 h-12 rounded-full bg-blue-500/15 text-blue-600 flex items-center justify-center mb-4">
+                      <Store size={22} />
+                    </div>
+                    <p className="text-4xl font-bold text-foreground">{infoEntries.length}</p>
+                    <p className="text-muted-foreground mt-2">Business Information</p>
+                  </div>
+
+                  <div className="rounded-2xl border border-border bg-card p-5">
+                    <div className="w-12 h-12 rounded-full bg-emerald-500/15 text-emerald-600 flex items-center justify-center mb-4">
+                      <FileText size={22} />
+                    </div>
+                    <p className="text-4xl font-bold text-foreground">{fileEntries.length}</p>
+                    <p className="text-muted-foreground mt-2">Business Files</p>
+                  </div>
+
+                  <div className="rounded-2xl border border-border bg-card p-5">
+                    <div className="w-12 h-12 rounded-full bg-amber-500/15 text-amber-600 flex items-center justify-center mb-4">
+                      <MessageCircle size={22} />
+                    </div>
+                    <p className="text-4xl font-bold text-foreground">{whatsappConnected ? 1 : 0}</p>
+                    <p className="text-muted-foreground mt-2">WhatsApp Connections</p>
+                  </div>
+
+                  <div className="rounded-2xl border border-border bg-card p-5">
+                    <div className="w-12 h-12 rounded-full bg-violet-500/15 text-violet-600 flex items-center justify-center mb-4">
+                      <Sparkles size={22} />
+                    </div>
+                    <p className="text-4xl font-bold text-foreground">{botEntries.filter((bot) => bot.is_active).length}</p>
+                    <p className="text-muted-foreground mt-2">Active AI Bots</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h2 className="text-3xl font-display font-bold">Quick Actions</h2>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <button
+                      type="button"
+                      onClick={() => setStep(0)}
+                      className="rounded-2xl border border-border bg-card p-5 text-left hover:bg-muted/40 transition-colors"
+                    >
+                      <p className="text-lg font-semibold">Add Business Info</p>
+                      <p className="text-sm text-muted-foreground mt-2">Build your knowledge base</p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setStep(1)}
+                      className="rounded-2xl border border-border bg-card p-5 text-left hover:bg-muted/40 transition-colors"
+                    >
+                      <p className="text-lg font-semibold">Connect WhatsApp</p>
+                      <p className="text-sm text-muted-foreground mt-2">Enable messaging channel</p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setStep(2)}
+                      className="rounded-2xl border border-border bg-card p-5 text-left hover:bg-muted/40 transition-colors"
+                    >
+                      <p className="text-lg font-semibold">Create AI Bot</p>
+                      <p className="text-sm text-muted-foreground mt-2">Configure prompt automation</p>
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             )}
