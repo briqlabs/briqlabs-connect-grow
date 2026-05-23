@@ -150,7 +150,7 @@ const Agent = () => {
     { label: "Turn ON AI",       icon: Power },
   ];
   const sideNav = [
-    { label: "Dashboard", icon: LayoutDashboard, targetStep: 0 as Step },
+    { label: "Dashboard", icon: LayoutDashboard, targetStep: 3 as Step },
     { label: "Business Details", icon: Store, targetStep: 0 as Step },
     { label: "Whatsapp Integration", icon: MessageCircle, targetStep: 1 as Step },
     { label: "AI bot", icon: Sparkles, targetStep: 2 as Step },
@@ -196,10 +196,18 @@ const Agent = () => {
         toast.error(infoErr?.message ?? fileErr?.message ?? botErr?.message ?? "Failed to load business details");
         return;
       }
-      setInfoEntries(infoData ?? []);
-      setFileEntries(fileData ?? []);
-      setBotEntries(botData ?? []);
-      setAiOn((botData ?? []).some((b) => b.is_active));
+      const infoRows = infoData ?? [];
+      const fileRows = fileData ?? [];
+      const bots = botData ?? [];
+      const hasExistingSetup = infoRows.length > 0 || fileRows.length > 0 || bots.length > 0;
+
+      setInfoEntries(infoRows);
+      setFileEntries(fileRows);
+      setBotEntries(bots);
+      setAiOn(bots.some((b) => b.is_active));
+
+      // Returning users should land on dashboard directly.
+      if (hasExistingSetup) setStep(3);
     };
 
     void loadData();
