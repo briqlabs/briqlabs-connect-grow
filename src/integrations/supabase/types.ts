@@ -137,6 +137,48 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_webhook_messages: {
+        Row: {
+          created_at: string
+          event: string | null
+          from_me: boolean
+          id: string
+          instance: string | null
+          message: string | null
+          message_id: string | null
+          payload: Json
+          phone_number: string | null
+          push_name: string | null
+          raw_timestamp: number | null
+        }
+        Insert: {
+          created_at?: string
+          event?: string | null
+          from_me?: boolean
+          id?: string
+          instance?: string | null
+          message?: string | null
+          message_id?: string | null
+          payload: Json
+          phone_number?: string | null
+          push_name?: string | null
+          raw_timestamp?: number | null
+        }
+        Update: {
+          created_at?: string
+          event?: string | null
+          from_me?: boolean
+          id?: string
+          instance?: string | null
+          message?: string | null
+          message_id?: string | null
+          payload?: Json
+          phone_number?: string | null
+          push_name?: string | null
+          raw_timestamp?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
