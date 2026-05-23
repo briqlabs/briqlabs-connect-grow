@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Upload, MessageCircle, Power, Check, ArrowRight, ArrowLeft,
   Store, FileText, QrCode, Sparkles, LogOut, LifeBuoy, LayoutDashboard,
-  RefreshCw, Smartphone, Loader2, AlertCircle,
+  RefreshCw, Smartphone, Loader2, AlertCircle, Trash2,
 } from "lucide-react";
 import { Button }   from "@/components/ui/button";
 import { Input }    from "@/components/ui/input";
@@ -131,10 +131,11 @@ const Agent = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>(0);
   const [businessName, setBusinessName] = useState("");
-  const [businessType, setBusinessType] = useState("");
   const [businessInfo, setBusinessInfo] = useState("");
-  const [fileName,     setFileName]     = useState("");
-  const [file,         setFile]         = useState<File | null>(null);
+  const [infoEntries, setInfoEntries] = useState<Array<{ id: string; name: string; description: string; created_at: string }>>([]);
+  const [fileEntries, setFileEntries] = useState<Array<{ id: string; file_name: string; file_path: string; created_at: string; file_size: number | null }>>([]);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [activeTab, setActiveTab] = useState<"info" | "files">("info");
   const [saving,       setSaving]       = useState(false);
   const [whatsappConnected, setWhatsappConnected] = useState(false);
   const [aiOn, setAiOn] = useState(false);
@@ -151,41 +152,150 @@ const Agent = () => {
     { label: "AI bot", icon: Sparkles, targetStep: 2 as Step },
   ];
 
-  const canNextFrom0 =
-    businessName.trim().length > 1 &&
-    businessType.trim().length > 1 &&
-    (businessInfo.trim().length > 5 || !!fileName);
+  const canNextFrom0 = infoEntries.length > 0 || fileEntries.length > 0;
   const canNextFrom1 = whatsappConnected;
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (f) { setFile(f); setFileName(f.name); toast.success(`Selected ${f.name}`); }
+  useEffect(() => {
+    const loadData = async () => {
+      const [{ data: infoData, error: infoErr }, { data: fileData, error: fileErr }] = await Promise.all([
+        supabase
+          .from("business_information")
+          .select("id,name,description,created_at")
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("business_files")
+          .select("id,file_name,file_path,created_at,file_size")
+          .order("created_at", { ascending: false }),
+      ]);
+
+      if (infoErr || fileErr) {
+        toast.error(infoErr?.message ?? fileErr?.message ?? "Failed to load business details");
+        return;
+      }
+      setInfoEntries(infoData ?? []);
+      setFileEntries(fileData ?? []);
+    };
+
+    void loadData();
+  }, []);
+
+  const handleFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    setPendingFiles((prev) => [...prev, ...files]);
+    toast.success(`Added ${files.length} file${files.length > 1 ? "s" : ""} to upload queue`);
   };
 
   const goNext = () => setStep((s) => Math.min(3, s + 1) as Step);
 
-  const saveBusinessProfile = async () => {
+  const addBusinessInformation = async () => {
+    if (!user?.id) {
+      toast.error("User session not found");
+      return;
+    }
     setSaving(true);
     try {
-      const form = new FormData();
-      form.append("business_name", businessName);
-      form.append("business_type", businessType);
-      form.append("business_info", businessInfo);
-      if (file) form.append("file", file);
+      const name = businessName.trim();
+      const description = businessInfo.trim();
+      if (name.length < 2 || description.length < 5) {
+        toast.error("Please provide a valid title and description");
+        return;
+      }
 
-      const { data, error } = await supabase.functions.invoke("save-business-profile", {
-        body: form,
-      });
+      const { data, error } = await supabase
+        .from("business_information")
+        .insert({ user_id: user.id, name, description })
+        .select("id,name,description,created_at")
+        .single();
       if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
-      toast.success("Business info saved");
-      goNext();
+      if (data) setInfoEntries((prev) => [data, ...prev]);
+      setBusinessName("");
+      setBusinessInfo("");
+      toast.success("Business information added");
     } catch (e: any) {
-      toast.error(e?.message ?? "Failed to save business info");
+      toast.error(e?.message ?? "Failed to add business information");
     } finally {
       setSaving(false);
     }
   };
+
+  const uploadBusinessFiles = async () => {
+    if (!user?.id || pendingFiles.length === 0) return;
+    setSaving(true);
+    try {
+      const uploadedRows: Array<{ id: string; file_name: string; file_path: string; created_at: string; file_size: number | null }> = [];
+
+      for (const file of pendingFiles) {
+        const safeName = file.name.replace(/[^\w.\-]+/g, "_");
+        const path = `${user.id}/${Date.now()}_${safeName}`;
+        const { error: upErr } = await supabase.storage.from("business-assets").upload(path, file, {
+          contentType: file.type || "application/octet-stream",
+          upsert: false,
+        });
+        if (upErr) throw upErr;
+
+        const { data, error: dbErr } = await supabase
+          .from("business_files")
+          .insert({
+            user_id: user.id,
+            file_name: file.name,
+            file_path: path,
+            mime_type: file.type || null,
+            file_size: file.size,
+          })
+          .select("id,file_name,file_path,created_at,file_size")
+          .single();
+        if (dbErr) throw dbErr;
+        if (data) uploadedRows.push(data);
+      }
+
+      setFileEntries((prev) => [...uploadedRows, ...prev]);
+      setPendingFiles([]);
+      toast.success("Files uploaded");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to upload files");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteBusinessInformation = async (id: string) => {
+    const { error } = await supabase.from("business_information").delete().eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setInfoEntries((prev) => prev.filter((row) => row.id !== id));
+    toast.success("Business information deleted");
+  };
+
+  const deleteBusinessFile = async (id: string, filePath: string) => {
+    const { error: storageErr } = await supabase.storage.from("business-assets").remove([filePath]);
+    if (storageErr) {
+      toast.error(storageErr.message);
+      return;
+    }
+    const { error } = await supabase.from("business_files").delete().eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setFileEntries((prev) => prev.filter((row) => row.id !== id));
+    toast.success("File deleted");
+  };
+
+  const removePendingFile = (fileName: string) => {
+    setPendingFiles((prev) => prev.filter((f) => f.name !== fileName));
+  };
+
+  const formatDate = (value: string) => {
+    try {
+      return new Date(value).toLocaleString();
+    } catch {
+      return value;
+    }
+  };
+
   const goBack = () => setStep((s) => Math.max(0, s - 1) as Step);
 
   const handleSignOut = async () => {
@@ -322,36 +432,124 @@ const Agent = () => {
                 <p className="text-muted-foreground mb-6">Your AI assistant will use this to answer customers.</p>
 
                 <div className="space-y-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="bn">Business name</Label>
-                    <Input id="bn" placeholder="e.g. Sharma Electronics" value={businessName} onChange={(e) => setBusinessName(e.target.value)} />
+                  <div className="flex rounded-lg border border-border bg-muted/30 p-1 text-sm">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("info")}
+                      className={`px-3 py-1.5 rounded-md ${activeTab === "info" ? "bg-background text-foreground" : "text-muted-foreground"}`}
+                    >
+                      Business Information
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("files")}
+                      className={`px-3 py-1.5 rounded-md ${activeTab === "files" ? "bg-background text-foreground" : "text-muted-foreground"}`}
+                    >
+                      Business Files
+                    </button>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="bt">What do you do?</Label>
-                    <Input id="bt" placeholder="e.g. Mobile phone shop, Dental clinic, Saree store" value={businessType} onChange={(e) => setBusinessType(e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="bi">Business details</Label>
-                    <Textarea
-                      id="bi" rows={5}
-                      placeholder="Write a few lines about your products, services, prices, timings, address, etc. The AI will use this to reply to customers."
-                      value={businessInfo} onChange={(e) => setBusinessInfo(e.target.value)}
-                    />
-                  </div>
-                  <div className="rounded-xl border border-dashed border-border p-5 text-center bg-muted/30">
-                    <FileText className="mx-auto text-muted-foreground mb-2" />
-                    <p className="text-sm text-muted-foreground mb-3">Or upload a menu / brochure / price list (PDF, image)</p>
-                    <label className="inline-flex items-center gap-2 cursor-pointer text-sm font-medium text-primary hover:underline">
-                      <Upload size={16} />
-                      {fileName ? `Replace: ${fileName}` : "Choose file"}
-                      <input type="file" className="hidden" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx" onChange={handleFile} />
-                    </label>
-                  </div>
+
+                  {activeTab === "info" ? (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="bn">Title</Label>
+                        <Input id="bn" placeholder="e.g. Store timings" value={businessName} onChange={(e) => setBusinessName(e.target.value)} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="bi">Description</Label>
+                        <Textarea
+                          id="bi" rows={4}
+                          placeholder="Write business details your AI should use."
+                          value={businessInfo} onChange={(e) => setBusinessInfo(e.target.value)}
+                        />
+                      </div>
+                      <Button type="button" variant="hero" onClick={addBusinessInformation} disabled={saving}>
+                        Add Business Information
+                      </Button>
+
+                      <div className="rounded-xl border border-border overflow-hidden">
+                        <div className="grid grid-cols-12 px-4 py-3 text-xs uppercase text-muted-foreground border-b border-border">
+                          <span className="col-span-3">Name</span>
+                          <span className="col-span-5">Description</span>
+                          <span className="col-span-3">Created At</span>
+                          <span className="col-span-1 text-right">Actions</span>
+                        </div>
+                        {infoEntries.length === 0 ? (
+                          <p className="p-4 text-sm text-muted-foreground">No business information added yet.</p>
+                        ) : (
+                          infoEntries.map((entry) => (
+                            <div key={entry.id} className="grid grid-cols-12 px-4 py-3 text-sm border-b border-border last:border-b-0">
+                              <span className="col-span-3">{entry.name}</span>
+                              <span className="col-span-5 text-muted-foreground">{entry.description}</span>
+                              <span className="col-span-3 text-muted-foreground">{formatDate(entry.created_at)}</span>
+                              <div className="col-span-1 flex justify-end">
+                                <Button variant="ghost" size="icon" onClick={() => void deleteBusinessInformation(entry.id)}>
+                                  <Trash2 size={16} />
+                                </Button>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="rounded-xl border border-dashed border-border p-5 text-center bg-muted/30">
+                        <FileText className="mx-auto text-muted-foreground mb-2" />
+                        <p className="text-sm text-muted-foreground mb-3">Upload menu / brochure / price list (multiple files supported)</p>
+                        <label className="inline-flex items-center gap-2 cursor-pointer text-sm font-medium text-primary hover:underline">
+                          <Upload size={16} />
+                          Choose files
+                          <input type="file" multiple className="hidden" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx" onChange={handleFiles} />
+                        </label>
+                      </div>
+
+                      {pendingFiles.length > 0 && (
+                        <div className="rounded-xl border border-border p-3 space-y-2">
+                          <p className="text-sm font-medium">Ready to upload</p>
+                          {pendingFiles.map((f) => (
+                            <div key={`${f.name}-${f.size}`} className="flex items-center justify-between text-sm">
+                              <span>{f.name}</span>
+                              <Button type="button" size="sm" variant="ghost" onClick={() => removePendingFile(f.name)}>
+                                Remove
+                              </Button>
+                            </div>
+                          ))}
+                          <Button type="button" onClick={uploadBusinessFiles} disabled={saving}>Upload Files</Button>
+                        </div>
+                      )}
+
+                      <div className="rounded-xl border border-border overflow-hidden">
+                        <div className="grid grid-cols-12 px-4 py-3 text-xs uppercase text-muted-foreground border-b border-border">
+                          <span className="col-span-5">File</span>
+                          <span className="col-span-3">Size</span>
+                          <span className="col-span-3">Created At</span>
+                          <span className="col-span-1 text-right">Actions</span>
+                        </div>
+                        {fileEntries.length === 0 ? (
+                          <p className="p-4 text-sm text-muted-foreground">No files uploaded yet.</p>
+                        ) : (
+                          fileEntries.map((entry) => (
+                            <div key={entry.id} className="grid grid-cols-12 px-4 py-3 text-sm border-b border-border last:border-b-0">
+                              <span className="col-span-5">{entry.file_name}</span>
+                              <span className="col-span-3 text-muted-foreground">{entry.file_size ? `${Math.ceil(entry.file_size / 1024)} KB` : "-"}</span>
+                              <span className="col-span-3 text-muted-foreground">{formatDate(entry.created_at)}</span>
+                              <div className="col-span-1 flex justify-end">
+                                <Button variant="ghost" size="icon" onClick={() => void deleteBusinessFile(entry.id, entry.file_path)}>
+                                  <Trash2 size={16} />
+                                </Button>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex justify-end mt-8">
-                  <Button variant="hero" size="lg" disabled={!canNextFrom0 || saving} onClick={saveBusinessProfile}>
-                    {saving ? "Saving…" : "Next"} <ArrowRight size={16} />
+                  <Button variant="hero" size="lg" disabled={!canNextFrom0 || saving} onClick={goNext}>
+                    Next <ArrowRight size={16} />
                   </Button>
                 </div>
               </motion.div>
