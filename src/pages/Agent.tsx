@@ -3,7 +3,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Upload, MessageCircle, Power, Check, ArrowRight, ArrowLeft,
-  Store, FileText, QrCode, Sparkles, LogOut, Settings, LifeBuoy,
+  Store, FileText, QrCode, Sparkles, LogOut, LifeBuoy, LayoutDashboard,
   RefreshCw, Smartphone, Loader2, AlertCircle,
 } from "lucide-react";
 import { Button }   from "@/components/ui/button";
@@ -144,6 +144,12 @@ const Agent = () => {
     { label: "Connect WhatsApp", icon: MessageCircle },
     { label: "Turn ON AI",       icon: Power },
   ];
+  const sideNav = [
+    { label: "Dashboard", icon: LayoutDashboard, targetStep: 0 as Step },
+    { label: "Business Details", icon: Store, targetStep: 0 as Step },
+    { label: "Whatsapp Integration", icon: MessageCircle, targetStep: 1 as Step },
+    { label: "AI bot", icon: Sparkles, targetStep: 2 as Step },
+  ];
 
   const canNextFrom0 =
     businessName.trim().length > 1 &&
@@ -207,12 +213,28 @@ const Agent = () => {
         </div>
 
         <nav className="flex-1 p-3 space-y-1 text-sm">
-          <a className="flex items-center gap-3 px-3 py-2 rounded-lg bg-muted text-foreground font-medium">
-            <Sparkles size={16} /> Setup
-          </a>
-          <a href="/" className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
-            <Settings size={16} /> Home
-          </a>
+          {sideNav.map((item) => {
+            const Icon = item.icon;
+            const isActive =
+              item.targetStep === step ||
+              (item.label === "Dashboard" && step === 3);
+
+            return (
+              <button
+                key={item.label}
+                type="button"
+                onClick={() => setStep(item.targetStep)}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                  isActive
+                    ? "bg-muted text-foreground font-medium"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                <Icon size={16} /> {item.label}
+              </button>
+            );
+          })}
+
           <a href="https://wa.me/919999999999" target="_blank" rel="noreferrer" className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
             <LifeBuoy size={16} /> Help
           </a>
