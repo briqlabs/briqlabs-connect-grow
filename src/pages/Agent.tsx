@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Upload, MessageCircle, Power, Check, ArrowRight, ArrowLeft,
   Store, FileText, QrCode, Sparkles, LogOut, LifeBuoy, LayoutDashboard,
-  RefreshCw, Smartphone, Loader2, AlertCircle, Trash2,
+  RefreshCw, Smartphone, Loader2, AlertCircle, Trash2, Pencil, Plus,
 } from "lucide-react";
 import { Button }   from "@/components/ui/button";
 import { Input }    from "@/components/ui/input";
@@ -139,6 +139,10 @@ const Agent = () => {
   const [saving,       setSaving]       = useState(false);
   const [whatsappConnected, setWhatsappConnected] = useState(false);
   const [aiOn, setAiOn] = useState(false);
+  const [botName, setBotName] = useState("");
+  const [botPrompt, setBotPrompt] = useState("");
+  const [editingBotId, setEditingBotId] = useState<string | null>(null);
+  const [botEntries, setBotEntries] = useState<Array<{ id: string; name: string; prompt: string; is_active: boolean; created_at: string; updated_at: string }>>([]);
 
   const steps = [
     { label: "Business Info",    icon: Store },
@@ -154,10 +158,26 @@ const Agent = () => {
 
   const canNextFrom0 = infoEntries.length > 0 || fileEntries.length > 0;
   const canNextFrom1 = whatsappConnected;
+  const canNextFrom2 = aiOn && botEntries.length > 0;
+
+  const botTemplates = [
+    {
+      name: "Customer Support Bot",
+      prompt: "You are a helpful customer support assistant. Use business knowledge to answer questions clearly, politely, and accurately.",
+    },
+    {
+      name: "Sales Assistant",
+      prompt: "You are a sales assistant. Help customers understand products, pricing, and benefits using business details.",
+    },
+    {
+      name: "FAQ Bot",
+      prompt: "You are an FAQ bot. Answer common questions from business knowledge. If unsure, politely ask the user to contact support.",
+    },
+  ];
 
   useEffect(() => {
     const loadData = async () => {
-      const [{ data: infoData, error: infoErr }, { data: fileData, error: fileErr }] = await Promise.all([
+      const [{ data: infoData, error: infoErr }, { data: fileData, error: fileErr }, { data: botData, error: botErr }] = await Promise.all([
         supabase
           .from("business_information")
           .select("id,name,description,created_at")
@@ -166,14 +186,20 @@ const Agent = () => {
           .from("business_files")
           .select("id,file_name,file_path,created_at,file_size")
           .order("created_at", { ascending: false }),
+        supabase
+          .from("ai_bots")
+          .select("id,name,prompt,is_active,created_at,updated_at")
+          .order("created_at", { ascending: false }),
       ]);
 
-      if (infoErr || fileErr) {
-        toast.error(infoErr?.message ?? fileErr?.message ?? "Failed to load business details");
+      if (infoErr || fileErr || botErr) {
+        toast.error(infoErr?.message ?? fileErr?.message ?? botErr?.message ?? "Failed to load business details");
         return;
       }
       setInfoEntries(infoData ?? []);
       setFileEntries(fileData ?? []);
+      setBotEntries(botData ?? []);
+      setAiOn((botData ?? []).some((b) => b.is_active));
     };
 
     void loadData();
@@ -282,6 +308,88 @@ const Agent = () => {
     }
     setFileEntries((prev) => prev.filter((row) => row.id !== id));
     toast.success("File deleted");
+  };
+
+  const applyTemplate = (name: string, prompt: string) => {
+    setBotName(name);
+    setBotPrompt(prompt);
+    setEditingBotId(null);
+  };
+
+  const editBot = (id: string) => {
+    const row = botEntries.find((bot) => bot.id === id);
+    if (!row) return;
+    setBotName(row.name);
+    setBotPrompt(row.prompt);
+    setEditingBotId(row.id);
+  };
+
+  const resetBotForm = () => {
+    setBotName("");
+    setBotPrompt("");
+    setEditingBotId(null);
+  };
+
+  const saveBot = async () => {
+    if (!user?.id) {
+      toast.error("User session not found");
+      return;
+    }
+    const name = botName.trim();
+    const prompt = botPrompt.trim();
+    if (name.length < 2 || prompt.length < 10) {
+      toast.error("Please provide a bot name and meaningful prompt");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      if (editingBotId) {
+        const { data, error } = await supabase
+          .from("ai_bots")
+          .update({
+            name,
+            prompt,
+            is_active: aiOn,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", editingBotId)
+          .select("id,name,prompt,is_active,created_at,updated_at")
+          .single();
+        if (error) throw error;
+        setBotEntries((prev) => prev.map((bot) => (bot.id === editingBotId ? data : bot)));
+        toast.success("Bot updated");
+      } else {
+        const { data, error } = await supabase
+          .from("ai_bots")
+          .insert({
+            user_id: user.id,
+            name,
+            prompt,
+            is_active: aiOn,
+          })
+          .select("id,name,prompt,is_active,created_at,updated_at")
+          .single();
+        if (error) throw error;
+        setBotEntries((prev) => [data, ...prev]);
+        toast.success("Bot created");
+      }
+      resetBotForm();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to save bot");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteBot = async (id: string) => {
+    const { error } = await supabase.from("ai_bots").delete().eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setBotEntries((prev) => prev.filter((bot) => bot.id !== id));
+    toast.success("Bot deleted");
   };
 
   const removePendingFile = (fileName: string) => {
@@ -587,7 +695,7 @@ const Agent = () => {
               </motion.div>
             )}
 
-            {/* ── Step 2 — Turn ON AI ── */}
+            {/* ── Step 2 — AI Bot Configuration ── */}
             {step === 2 && (
               <motion.div
                 key="step-2"
@@ -596,9 +704,9 @@ const Agent = () => {
               >
                 <div className="flex items-center gap-3 mb-2">
                   <Power className="text-primary" />
-                  <h1 className="text-2xl font-display font-bold">Turn ON your AI assistant</h1>
+                  <h1 className="text-2xl font-display font-bold">AI Bot Configuration</h1>
                 </div>
-                <p className="text-muted-foreground mb-6">That's it! Switch it on and your AI will start replying to customers on WhatsApp.</p>
+                <p className="text-muted-foreground mb-6">Create and manage your bot prompts. Use a template or write your own behavior.</p>
 
                 <div className="rounded-xl border border-border p-6 flex items-center justify-between bg-muted/30">
                   <div className="flex items-center gap-4">
@@ -607,18 +715,92 @@ const Agent = () => {
                     </div>
                     <div>
                       <p className="font-semibold text-lg">AI Assistant</p>
-                      <p className="text-sm text-muted-foreground">{aiOn ? "Active — replying to customers" : "Currently off"}</p>
+                      <p className="text-sm text-muted-foreground">{aiOn ? "Active - bot can reply using saved prompts" : "Currently off"}</p>
                     </div>
                   </div>
                   <Switch checked={aiOn} onCheckedChange={setAiOn} className="scale-125" />
                 </div>
 
-                <div className="mt-6 grid gap-3">
-                  {["Replies 24/7 in Hindi & English", "Answers from your business details", "You can turn it off anytime"].map((line) => (
-                    <div key={line} className="flex items-start gap-3 text-sm">
-                      <Check size={16} className="text-primary mt-0.5" />
-                      <span>{line}</span>
-                    </div>
+                <div className="mt-6 rounded-xl border border-border bg-muted/30 p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="font-semibold">Create Bot</p>
+                    <Button type="button" size="sm" variant="hero" onClick={resetBotForm}>
+                      <Plus size={14} /> New
+                    </Button>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="bot-name">Bot Name</Label>
+                    <Input
+                      id="bot-name"
+                      placeholder="e.g. Customer Support Bot"
+                      value={botName}
+                      onChange={(e) => setBotName(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="bot-prompt">Bot Prompt</Label>
+                    <Textarea
+                      id="bot-prompt"
+                      rows={5}
+                      placeholder="Define how your bot should respond to customers."
+                      value={botPrompt}
+                      onChange={(e) => setBotPrompt(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button type="button" onClick={saveBot} disabled={saving}>
+                      {editingBotId ? "Update Bot" : "Create Bot"}
+                    </Button>
+                    {editingBotId && (
+                      <Button type="button" variant="ghost" onClick={resetBotForm}>
+                        Cancel Edit
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-6 rounded-xl border border-border p-5">
+                  <p className="font-semibold mb-1">Sample Bot Templates</p>
+                  <p className="text-sm text-muted-foreground mb-4">Click a template to prefill the bot form.</p>
+                  <div className="grid gap-3 md:grid-cols-3">
+                    {botTemplates.map((template) => (
+                      <div key={template.name} className="rounded-lg border border-border bg-background p-4">
+                        <p className="font-semibold mb-2">{template.name}</p>
+                        <p className="text-sm text-muted-foreground mb-3">{template.prompt}</p>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => applyTemplate(template.name, template.prompt)}>
+                          Use Template
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-6 rounded-xl border border-border overflow-hidden">
+                  <div className="grid grid-cols-12 px-4 py-3 text-xs uppercase text-muted-foreground border-b border-border">
+                    <span className="col-span-2">Bot</span>
+                    <span className="col-span-6">Prompt</span>
+                    <span className="col-span-2">Status</span>
+                    <span className="col-span-2 text-right">Actions</span>
+                  </div>
+                  {botEntries.length === 0 ? (
+                    <p className="p-4 text-sm text-muted-foreground">No bots created yet.</p>
+                  ) : (
+                    botEntries.map((bot) => (
+                      <div key={bot.id} className="grid grid-cols-12 px-4 py-3 text-sm border-b border-border last:border-b-0">
+                        <span className="col-span-2 font-medium">{bot.name}</span>
+                        <span className="col-span-6 text-muted-foreground">{bot.prompt}</span>
+                        <span className="col-span-2">{bot.is_active ? "Active" : "Inactive"}</span>
+                        <div className="col-span-2 flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => editBot(bot.id)}>
+                            <Pencil size={16} />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => void deleteBot(bot.id)}>
+                            <Trash2 size={16} />
+                          </Button>
+                        </div>
+                      </div>
+                    ))
                   ))}
                 </div>
 
@@ -626,7 +808,7 @@ const Agent = () => {
                   <Button variant="ghost" onClick={goBack}>
                     <ArrowLeft size={16} /> Back
                   </Button>
-                  <Button variant="hero" size="lg" disabled={!aiOn} onClick={() => setStep(3)}>
+                  <Button variant="hero" size="lg" disabled={!canNextFrom2} onClick={() => setStep(3)}>
                     Finish <ArrowRight size={16} />
                   </Button>
                 </div>
