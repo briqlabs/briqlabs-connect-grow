@@ -15,8 +15,17 @@ const POLL_INTERVAL_MS = 3_000;
 const QR_TTL_MS = 60_000;
 
 async function callEdge(action: string) {
+  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.id) {
+    throw new Error("Session expired. Please sign in again.");
+  }
+
   const { data, error } = await supabase.functions.invoke("create-whatsapp-instance", {
-    body: { action },
+    body: { action, user_id: user.id },
+    ...(session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : {}),
   });
 
   if (error) {

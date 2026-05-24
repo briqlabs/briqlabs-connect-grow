@@ -14,6 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_bots: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          prompt: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          prompt: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          prompt?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      business_files: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          mime_type: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      business_information: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       business_profiles: {
         Row: {
           business_info: string | null
@@ -47,6 +134,48 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      whatsapp_webhook_messages: {
+        Row: {
+          created_at: string
+          event: string | null
+          from_me: boolean
+          id: string
+          instance: string | null
+          message: string | null
+          message_id: string | null
+          payload: Json
+          phone_number: string | null
+          push_name: string | null
+          raw_timestamp: number | null
+        }
+        Insert: {
+          created_at?: string
+          event?: string | null
+          from_me?: boolean
+          id?: string
+          instance?: string | null
+          message?: string | null
+          message_id?: string | null
+          payload: Json
+          phone_number?: string | null
+          push_name?: string | null
+          raw_timestamp?: number | null
+        }
+        Update: {
+          created_at?: string
+          event?: string | null
+          from_me?: boolean
+          id?: string
+          instance?: string | null
+          message?: string | null
+          message_id?: string | null
+          payload?: Json
+          phone_number?: string | null
+          push_name?: string | null
+          raw_timestamp?: number | null
         }
         Relationships: []
       }
