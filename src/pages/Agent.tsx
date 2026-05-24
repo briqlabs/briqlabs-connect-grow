@@ -718,9 +718,11 @@ const Agent = () => {
               >
                 <div className="flex items-center gap-3 mb-2">
                   <Power className="text-primary" />
-                  <h1 className="text-2xl font-display font-bold">AI Bot Configuration</h1>
+                  <h1 className="text-2xl font-display font-bold">AI Bot Setup <span className="text-muted-foreground font-normal text-lg">/ Apna bot banayein</span></h1>
                 </div>
-                <p className="text-muted-foreground mb-6">Create and manage your bot prompts. Use a template or write your own behavior.</p>
+                <p className="text-muted-foreground mb-6">
+                  Apne customers ko auto-reply dene wala bot 2 minute mein taiyaar karein. Niche template chunein ya apni marzi se likhein.
+                </p>
 
                 <div className="rounded-xl border border-border p-6 flex items-center justify-between bg-muted/30">
                   <div className="flex items-center gap-4">
@@ -728,8 +730,8 @@ const Agent = () => {
                       <Sparkles size={26} />
                     </div>
                     <div>
-                      <p className="font-semibold text-lg">AI Assistant</p>
-                      <p className="text-sm text-muted-foreground">{aiOn ? "Active - bot can reply using saved prompts" : "Currently off"}</p>
+                      <p className="font-semibold text-lg">AI Assistant {aiOn ? "ON" : "OFF"}</p>
+                      <p className="text-sm text-muted-foreground">{aiOn ? "Bot aapke customers ko auto-reply de raha hai 🚀" : "Switch ON karein taaki bot replies bhejna shuru kare"}</p>
                     </div>
                   </div>
                   <Switch checked={aiOn} onCheckedChange={setAiOn} className="scale-125" />
@@ -737,7 +739,7 @@ const Agent = () => {
 
                 <div className="mt-6 rounded-xl border border-border bg-muted/30 p-5 space-y-4">
                   <div className="flex items-center justify-between">
-                    <p className="font-semibold">Create Bot</p>
+                    <p className="font-semibold">Naya Bot banayein</p>
                     <Button type="button" size="sm" variant="hero" onClick={resetBotForm}>
                       <Plus size={14} /> New
                     </Button>
@@ -747,17 +749,17 @@ const Agent = () => {
                     <Label htmlFor="bot-name">Bot Name</Label>
                     <Input
                       id="bot-name"
-                      placeholder="e.g. Customer Support Bot"
+                      placeholder="e.g. Dukaan Support Bot"
                       value={botName}
                       onChange={(e) => setBotName(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="bot-prompt">Bot Prompt</Label>
+                    <Label htmlFor="bot-prompt">Bot Instructions <span className="text-muted-foreground font-normal">(bot ko kya karna hai)</span></Label>
                     <Textarea
                       id="bot-prompt"
                       rows={5}
-                      placeholder="Define how your bot should respond to customers."
+                      placeholder="Example: Aap ek polite assistant hain. Customer ke sawal ka short Hinglish reply dein…"
                       value={botPrompt}
                       onChange={(e) => setBotPrompt(e.target.value)}
                     />
@@ -775,8 +777,8 @@ const Agent = () => {
                 </div>
 
                 <div className="mt-6 rounded-xl border border-border p-5">
-                  <p className="font-semibold mb-1">Sample Bot Templates</p>
-                  <p className="text-sm text-muted-foreground mb-4">Click a template to prefill the bot form.</p>
+                  <p className="font-semibold mb-1">Ready-made Templates</p>
+                  <p className="text-sm text-muted-foreground mb-4">Ek template chunein — ham form bhar denge, aap edit kar sakte hain.</p>
                   <div className="grid gap-3 md:grid-cols-3">
                     {botTemplates.map((template) => (
                       <div key={template.name} className="rounded-lg border border-border bg-background p-4">
