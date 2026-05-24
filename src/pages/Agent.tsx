@@ -108,15 +108,15 @@ function WhatsAppQRPanel({ onConnected }: { onConnected: () => void }) {
         <ol className="space-y-2 text-sm text-muted-foreground list-none">
           <li className="flex items-start gap-2">
             <span className="w-5 h-5 rounded-full bg-primary/15 text-primary text-xs flex items-center justify-center font-bold flex-shrink-0 mt-0.5">1</span>
-            Open WhatsApp on your phone
+            Apne phone par WhatsApp kholein
           </li>
           <li className="flex items-start gap-2">
             <span className="w-5 h-5 rounded-full bg-primary/15 text-primary text-xs flex items-center justify-center font-bold flex-shrink-0 mt-0.5">2</span>
-            Go to <strong>Settings → Linked Devices → Link a Device</strong>
+            Jaayein <strong>Settings → Linked Devices → Link a Device</strong>
           </li>
           <li className="flex items-start gap-2">
             <span className="w-5 h-5 rounded-full bg-primary/15 text-primary text-xs flex items-center justify-center font-bold flex-shrink-0 mt-0.5">3</span>
-            Point your camera at the QR code above
+            Upar diye QR code par camera point karein — bas ho gaya ✅
           </li>
         </ol>
       </div>
@@ -162,16 +162,16 @@ const Agent = () => {
 
   const botTemplates = [
     {
-      name: "Customer Support Bot",
-      prompt: "You are a helpful customer support assistant. Use business knowledge to answer questions clearly, politely, and accurately.",
+      name: "Dukaan Support Bot",
+      prompt: "You are a friendly customer support assistant for an Indian small business. Reply in simple Hinglish (mix of Hindi + English). Use the business knowledge to answer questions about timings, location, products and policies. Be short, polite and helpful.",
     },
     {
-      name: "Sales Assistant",
-      prompt: "You are a sales assistant. Help customers understand products, pricing, and benefits using business details.",
+      name: "Lead Capture Bot",
+      prompt: "You are a sales assistant. Greet the customer warmly in Hinglish, understand what they need, share relevant product/price info from business knowledge, and politely ask for their name, city and phone number so the team can follow up.",
     },
     {
-      name: "FAQ Bot",
-      prompt: "You are an FAQ bot. Answer common questions from business knowledge. If unsure, politely ask the user to contact support.",
+      name: "Appointment / Booking Bot",
+      prompt: "You help customers book an appointment or place an order. Ask for service/product, preferred date & time, name and phone number. Confirm details back in Hinglish and tell them the team will reach out shortly.",
     },
   ];
 
@@ -680,9 +680,15 @@ const Agent = () => {
               >
                 <div className="flex items-center gap-3 mb-2">
                   <MessageCircle className="text-primary" />
-                  <h1 className="text-2xl font-display font-bold">Connect your WhatsApp</h1>
+                  <h1 className="text-2xl font-display font-bold">Connect your WhatsApp <span className="text-muted-foreground font-normal text-lg">/ WhatsApp jodein</span></h1>
                 </div>
-                <p className="text-muted-foreground mb-6">Scan the QR code with your WhatsApp app to link your account.</p>
+                <p className="text-muted-foreground mb-6">
+                  Apne <strong>business WhatsApp number</strong> se neeche diye QR ko scan karein.
+                  Bas ek baar — phir saare customer messages aapke AI bot ko milenge.
+                </p>
+                <div className="mb-6 rounded-xl bg-amber-500/10 border border-amber-500/30 px-4 py-3 text-sm text-foreground">
+                  💡 <strong>Tip:</strong> Use the WhatsApp number jisme aap customers ko reply karte hain — personal nahi, business wala.
+                </div>
 
                 {/* QR panel is mounted only when step === 1 */}
                 <WhatsAppQRPanel
@@ -712,9 +718,11 @@ const Agent = () => {
               >
                 <div className="flex items-center gap-3 mb-2">
                   <Power className="text-primary" />
-                  <h1 className="text-2xl font-display font-bold">AI Bot Configuration</h1>
+                  <h1 className="text-2xl font-display font-bold">AI Bot Setup <span className="text-muted-foreground font-normal text-lg">/ Apna bot banayein</span></h1>
                 </div>
-                <p className="text-muted-foreground mb-6">Create and manage your bot prompts. Use a template or write your own behavior.</p>
+                <p className="text-muted-foreground mb-6">
+                  Apne customers ko auto-reply dene wala bot 2 minute mein taiyaar karein. Niche template chunein ya apni marzi se likhein.
+                </p>
 
                 <div className="rounded-xl border border-border p-6 flex items-center justify-between bg-muted/30">
                   <div className="flex items-center gap-4">
@@ -722,8 +730,8 @@ const Agent = () => {
                       <Sparkles size={26} />
                     </div>
                     <div>
-                      <p className="font-semibold text-lg">AI Assistant</p>
-                      <p className="text-sm text-muted-foreground">{aiOn ? "Active - bot can reply using saved prompts" : "Currently off"}</p>
+                      <p className="font-semibold text-lg">AI Assistant {aiOn ? "ON" : "OFF"}</p>
+                      <p className="text-sm text-muted-foreground">{aiOn ? "Bot aapke customers ko auto-reply de raha hai 🚀" : "Switch ON karein taaki bot replies bhejna shuru kare"}</p>
                     </div>
                   </div>
                   <Switch checked={aiOn} onCheckedChange={setAiOn} className="scale-125" />
@@ -731,7 +739,7 @@ const Agent = () => {
 
                 <div className="mt-6 rounded-xl border border-border bg-muted/30 p-5 space-y-4">
                   <div className="flex items-center justify-between">
-                    <p className="font-semibold">Create Bot</p>
+                    <p className="font-semibold">Naya Bot banayein</p>
                     <Button type="button" size="sm" variant="hero" onClick={resetBotForm}>
                       <Plus size={14} /> New
                     </Button>
@@ -741,17 +749,17 @@ const Agent = () => {
                     <Label htmlFor="bot-name">Bot Name</Label>
                     <Input
                       id="bot-name"
-                      placeholder="e.g. Customer Support Bot"
+                      placeholder="e.g. Dukaan Support Bot"
                       value={botName}
                       onChange={(e) => setBotName(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="bot-prompt">Bot Prompt</Label>
+                    <Label htmlFor="bot-prompt">Bot Instructions <span className="text-muted-foreground font-normal">(bot ko kya karna hai)</span></Label>
                     <Textarea
                       id="bot-prompt"
                       rows={5}
-                      placeholder="Define how your bot should respond to customers."
+                      placeholder="Example: Aap ek polite assistant hain. Customer ke sawal ka short Hinglish reply dein…"
                       value={botPrompt}
                       onChange={(e) => setBotPrompt(e.target.value)}
                     />
@@ -769,8 +777,8 @@ const Agent = () => {
                 </div>
 
                 <div className="mt-6 rounded-xl border border-border p-5">
-                  <p className="font-semibold mb-1">Sample Bot Templates</p>
-                  <p className="text-sm text-muted-foreground mb-4">Click a template to prefill the bot form.</p>
+                  <p className="font-semibold mb-1">Ready-made Templates</p>
+                  <p className="text-sm text-muted-foreground mb-4">Ek template chunein — ham form bhar denge, aap edit kar sakte hain.</p>
                   <div className="grid gap-3 md:grid-cols-3">
                     {botTemplates.map((template) => (
                       <div key={template.name} className="rounded-lg border border-border bg-background p-4">
@@ -831,10 +839,21 @@ const Agent = () => {
                 className="space-y-6"
               >
                 <div className="rounded-3xl bg-gradient-to-r from-primary to-accent p-8 text-primary-foreground">
-                  <h1 className="text-4xl font-display font-extrabold mb-3">Welcome Back!</h1>
+                  <h1 className="text-4xl font-display font-extrabold mb-2">
+                    Namaste, {displayName.split(" ")[0]} 👋
+                  </h1>
                   <p className="text-lg/8 text-primary-foreground/90 max-w-3xl">
-                    Manage your business knowledge, files, WhatsApp connectivity, and AI bots from one place.
+                    Aapka AI WhatsApp agent yahan hai. Ek hi jagah par business info, WhatsApp aur bots manage karein —
+                    aur zyada leads paayein, bina kisi mehnat ke.
                   </p>
+                  <div className="mt-5 flex flex-wrap gap-2 text-sm">
+                    <span className={`px-3 py-1 rounded-full ${whatsappConnected ? "bg-emerald-500/20 text-emerald-50" : "bg-white/15 text-primary-foreground/80"}`}>
+                      {whatsappConnected ? "✅ WhatsApp Connected" : "⚠️ WhatsApp not connected"}
+                    </span>
+                    <span className={`px-3 py-1 rounded-full ${aiOn ? "bg-emerald-500/20 text-emerald-50" : "bg-white/15 text-primary-foreground/80"}`}>
+                      {aiOn ? "🤖 AI Bot Active" : "💤 AI Bot Off"}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -843,7 +862,7 @@ const Agent = () => {
                       <Store size={22} />
                     </div>
                     <p className="text-4xl font-bold text-foreground">{infoEntries.length}</p>
-                    <p className="text-muted-foreground mt-2">Business Information</p>
+                    <p className="text-muted-foreground mt-2">Business Info entries</p>
                   </div>
 
                   <div className="rounded-2xl border border-border bg-card p-5">
@@ -851,7 +870,7 @@ const Agent = () => {
                       <FileText size={22} />
                     </div>
                     <p className="text-4xl font-bold text-foreground">{fileEntries.length}</p>
-                    <p className="text-muted-foreground mt-2">Business Files</p>
+                    <p className="text-muted-foreground mt-2">Uploaded files</p>
                   </div>
 
                   <div className="rounded-2xl border border-border bg-card p-5">
@@ -859,7 +878,7 @@ const Agent = () => {
                       <MessageCircle size={22} />
                     </div>
                     <p className="text-4xl font-bold text-foreground">{whatsappConnected ? 1 : 0}</p>
-                    <p className="text-muted-foreground mt-2">WhatsApp Connections</p>
+                    <p className="text-muted-foreground mt-2">WhatsApp connected</p>
                   </div>
 
                   <div className="rounded-2xl border border-border bg-card p-5">
@@ -867,20 +886,20 @@ const Agent = () => {
                       <Sparkles size={22} />
                     </div>
                     <p className="text-4xl font-bold text-foreground">{botEntries.filter((bot) => bot.is_active).length}</p>
-                    <p className="text-muted-foreground mt-2">Active AI Bots</p>
+                    <p className="text-muted-foreground mt-2">Active AI bots</p>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <h2 className="text-3xl font-display font-bold">Quick Actions</h2>
+                  <h2 className="text-3xl font-display font-bold">Quick Actions <span className="text-muted-foreground text-lg font-normal">/ Jaldi karein</span></h2>
                   <div className="grid gap-4 md:grid-cols-3">
                     <button
                       type="button"
                       onClick={() => setStep(0)}
                       className="rounded-2xl border border-border bg-card p-5 text-left hover:bg-muted/40 transition-colors"
                     >
-                      <p className="text-lg font-semibold">Add Business Info</p>
-                      <p className="text-sm text-muted-foreground mt-2">Build your knowledge base</p>
+                      <p className="text-lg font-semibold">➕ Add Business Info</p>
+                      <p className="text-sm text-muted-foreground mt-2">Timings, products, prices — bot ko sab batayein</p>
                     </button>
 
                     <button
@@ -888,8 +907,8 @@ const Agent = () => {
                       onClick={() => setStep(1)}
                       className="rounded-2xl border border-border bg-card p-5 text-left hover:bg-muted/40 transition-colors"
                     >
-                      <p className="text-lg font-semibold">Connect WhatsApp</p>
-                      <p className="text-sm text-muted-foreground mt-2">Enable messaging channel</p>
+                      <p className="text-lg font-semibold">📱 {whatsappConnected ? "Manage WhatsApp" : "Connect WhatsApp"}</p>
+                      <p className="text-sm text-muted-foreground mt-2">{whatsappConnected ? "Status check karein ya dobara link karein" : "QR scan karke 30 sec mein link karein"}</p>
                     </button>
 
                     <button
@@ -897,8 +916,8 @@ const Agent = () => {
                       onClick={() => setStep(2)}
                       className="rounded-2xl border border-border bg-card p-5 text-left hover:bg-muted/40 transition-colors"
                     >
-                      <p className="text-lg font-semibold">Create AI Bot</p>
-                      <p className="text-sm text-muted-foreground mt-2">Configure prompt automation</p>
+                      <p className="text-lg font-semibold">🤖 {botEntries.length > 0 ? "Manage AI Bot" : "Create AI Bot"}</p>
+                      <p className="text-sm text-muted-foreground mt-2">Template chunein ya apna prompt likhein</p>
                     </button>
                   </div>
                 </div>
