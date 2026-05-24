@@ -108,15 +108,15 @@ function WhatsAppQRPanel({ onConnected }: { onConnected: () => void }) {
         <ol className="space-y-2 text-sm text-muted-foreground list-none">
           <li className="flex items-start gap-2">
             <span className="w-5 h-5 rounded-full bg-primary/15 text-primary text-xs flex items-center justify-center font-bold flex-shrink-0 mt-0.5">1</span>
-            Open WhatsApp on your phone
+            Apne phone par WhatsApp kholein
           </li>
           <li className="flex items-start gap-2">
             <span className="w-5 h-5 rounded-full bg-primary/15 text-primary text-xs flex items-center justify-center font-bold flex-shrink-0 mt-0.5">2</span>
-            Go to <strong>Settings → Linked Devices → Link a Device</strong>
+            Jaayein <strong>Settings → Linked Devices → Link a Device</strong>
           </li>
           <li className="flex items-start gap-2">
             <span className="w-5 h-5 rounded-full bg-primary/15 text-primary text-xs flex items-center justify-center font-bold flex-shrink-0 mt-0.5">3</span>
-            Point your camera at the QR code above
+            Upar diye QR code par camera point karein — bas ho gaya ✅
           </li>
         </ol>
       </div>
