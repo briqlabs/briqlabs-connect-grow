@@ -680,9 +680,15 @@ const Agent = () => {
               >
                 <div className="flex items-center gap-3 mb-2">
                   <MessageCircle className="text-primary" />
-                  <h1 className="text-2xl font-display font-bold">Connect your WhatsApp</h1>
+                  <h1 className="text-2xl font-display font-bold">Connect your WhatsApp <span className="text-muted-foreground font-normal text-lg">/ WhatsApp jodein</span></h1>
                 </div>
-                <p className="text-muted-foreground mb-6">Scan the QR code with your WhatsApp app to link your account.</p>
+                <p className="text-muted-foreground mb-6">
+                  Apne <strong>business WhatsApp number</strong> se neeche diye QR ko scan karein.
+                  Bas ek baar — phir saare customer messages aapke AI bot ko milenge.
+                </p>
+                <div className="mb-6 rounded-xl bg-amber-500/10 border border-amber-500/30 px-4 py-3 text-sm text-foreground">
+                  💡 <strong>Tip:</strong> Use the WhatsApp number jisme aap customers ko reply karte hain — personal nahi, business wala.
+                </div>
 
                 {/* QR panel is mounted only when step === 1 */}
                 <WhatsAppQRPanel
