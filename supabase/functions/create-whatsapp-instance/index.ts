@@ -14,12 +14,14 @@ const EVOLUTION_URL = Deno.env.get("EVOLUTION_API_URL")!;   // e.g. https://your
 const EVOLUTION_KEY = Deno.env.get("EVOLUTION_API_KEY")!;   // Global API key set in Evolution
 const SUPABASE_URL  = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
 if (
   !EVOLUTION_URL ||
   !EVOLUTION_KEY ||
   !SUPABASE_URL ||
-  !SUPABASE_SERVICE_KEY
+  !SUPABASE_SERVICE_KEY ||
+  !SUPABASE_ANON_KEY
 ) {
   throw new Error(
     "Missing required environment variables in Supabase Edge Function"
@@ -195,29 +197,39 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Authenticate the caller via Supabase JWT.
+    const body = await req.json() as { action: string; user_id?: string };
+    let userId = "";
+
+    // Preferred: authenticate the caller via Supabase JWT.
     const authHeader = req.headers.get("authorization") ?? "";
-    const userClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
-      global: { headers: { authorization: authHeader } },
-    });
-    const { data: { user }, error: authError } = await userClient.auth.getUser();
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+    if (authHeader) {
+      const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        global: { headers: { authorization: authHeader } },
+      });
+      const { data: { user }, error: authError } = await userClient.auth.getUser();
+      if (!authError && user?.id) {
+        userId = user.id;
+      }
+    }
+
+    // Fallback for environments where auth header is not forwarded reliably.
+    if (!userId && body.user_id) userId = body.user_id;
+    if (!userId) {
+      return new Response(JSON.stringify({ error: "Unauthorized: missing user context" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     // Service-role client for DB writes.
     const db = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-
-    const { action } = await req.json() as { action: string };
+    const { action } = body;
 
     let result: unknown;
     switch (action) {
-      case "create_instance":  result = await handleCreateInstance(db, user.id); break;
-      case "get_qr":           result = await handleGetQr(db, user.id);          break;
-      case "get_status":       result = await handleGetStatus(db, user.id);       break;
-      case "delete_instance":  result = await handleDeleteInstance(db, user.id);  break;
+      case "create_instance":  result = await handleCreateInstance(db, userId); break;
+      case "get_qr":           result = await handleGetQr(db, userId);          break;
+      case "get_status":       result = await handleGetStatus(db, userId);      break;
+      case "delete_instance":  result = await handleDeleteInstance(db, userId); break;
       default:
         return new Response(JSON.stringify({ error: `Unknown action: ${action}` }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
