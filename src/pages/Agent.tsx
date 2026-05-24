@@ -839,10 +839,21 @@ const Agent = () => {
                 className="space-y-6"
               >
                 <div className="rounded-3xl bg-gradient-to-r from-primary to-accent p-8 text-primary-foreground">
-                  <h1 className="text-4xl font-display font-extrabold mb-3">Welcome Back!</h1>
+                  <h1 className="text-4xl font-display font-extrabold mb-2">
+                    Namaste, {displayName.split(" ")[0]} 👋
+                  </h1>
                   <p className="text-lg/8 text-primary-foreground/90 max-w-3xl">
-                    Manage your business knowledge, files, WhatsApp connectivity, and AI bots from one place.
+                    Aapka AI WhatsApp agent yahan hai. Ek hi jagah par business info, WhatsApp aur bots manage karein —
+                    aur zyada leads paayein, bina kisi mehnat ke.
                   </p>
+                  <div className="mt-5 flex flex-wrap gap-2 text-sm">
+                    <span className={`px-3 py-1 rounded-full ${whatsappConnected ? "bg-emerald-500/20 text-emerald-50" : "bg-white/15 text-primary-foreground/80"}`}>
+                      {whatsappConnected ? "✅ WhatsApp Connected" : "⚠️ WhatsApp not connected"}
+                    </span>
+                    <span className={`px-3 py-1 rounded-full ${aiOn ? "bg-emerald-500/20 text-emerald-50" : "bg-white/15 text-primary-foreground/80"}`}>
+                      {aiOn ? "🤖 AI Bot Active" : "💤 AI Bot Off"}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -851,7 +862,7 @@ const Agent = () => {
                       <Store size={22} />
                     </div>
                     <p className="text-4xl font-bold text-foreground">{infoEntries.length}</p>
-                    <p className="text-muted-foreground mt-2">Business Information</p>
+                    <p className="text-muted-foreground mt-2">Business Info entries</p>
                   </div>
 
                   <div className="rounded-2xl border border-border bg-card p-5">
@@ -859,7 +870,7 @@ const Agent = () => {
                       <FileText size={22} />
                     </div>
                     <p className="text-4xl font-bold text-foreground">{fileEntries.length}</p>
-                    <p className="text-muted-foreground mt-2">Business Files</p>
+                    <p className="text-muted-foreground mt-2">Uploaded files</p>
                   </div>
 
                   <div className="rounded-2xl border border-border bg-card p-5">
@@ -867,7 +878,7 @@ const Agent = () => {
                       <MessageCircle size={22} />
                     </div>
                     <p className="text-4xl font-bold text-foreground">{whatsappConnected ? 1 : 0}</p>
-                    <p className="text-muted-foreground mt-2">WhatsApp Connections</p>
+                    <p className="text-muted-foreground mt-2">WhatsApp connected</p>
                   </div>
 
                   <div className="rounded-2xl border border-border bg-card p-5">
@@ -875,20 +886,20 @@ const Agent = () => {
                       <Sparkles size={22} />
                     </div>
                     <p className="text-4xl font-bold text-foreground">{botEntries.filter((bot) => bot.is_active).length}</p>
-                    <p className="text-muted-foreground mt-2">Active AI Bots</p>
+                    <p className="text-muted-foreground mt-2">Active AI bots</p>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <h2 className="text-3xl font-display font-bold">Quick Actions</h2>
+                  <h2 className="text-3xl font-display font-bold">Quick Actions <span className="text-muted-foreground text-lg font-normal">/ Jaldi karein</span></h2>
                   <div className="grid gap-4 md:grid-cols-3">
                     <button
                       type="button"
                       onClick={() => setStep(0)}
                       className="rounded-2xl border border-border bg-card p-5 text-left hover:bg-muted/40 transition-colors"
                     >
-                      <p className="text-lg font-semibold">Add Business Info</p>
-                      <p className="text-sm text-muted-foreground mt-2">Build your knowledge base</p>
+                      <p className="text-lg font-semibold">➕ Add Business Info</p>
+                      <p className="text-sm text-muted-foreground mt-2">Timings, products, prices — bot ko sab batayein</p>
                     </button>
 
                     <button
@@ -896,8 +907,8 @@ const Agent = () => {
                       onClick={() => setStep(1)}
                       className="rounded-2xl border border-border bg-card p-5 text-left hover:bg-muted/40 transition-colors"
                     >
-                      <p className="text-lg font-semibold">Connect WhatsApp</p>
-                      <p className="text-sm text-muted-foreground mt-2">Enable messaging channel</p>
+                      <p className="text-lg font-semibold">📱 {whatsappConnected ? "Manage WhatsApp" : "Connect WhatsApp"}</p>
+                      <p className="text-sm text-muted-foreground mt-2">{whatsappConnected ? "Status check karein ya dobara link karein" : "QR scan karke 30 sec mein link karein"}</p>
                     </button>
 
                     <button
@@ -905,8 +916,8 @@ const Agent = () => {
                       onClick={() => setStep(2)}
                       className="rounded-2xl border border-border bg-card p-5 text-left hover:bg-muted/40 transition-colors"
                     >
-                      <p className="text-lg font-semibold">Create AI Bot</p>
-                      <p className="text-sm text-muted-foreground mt-2">Configure prompt automation</p>
+                      <p className="text-lg font-semibold">🤖 {botEntries.length > 0 ? "Manage AI Bot" : "Create AI Bot"}</p>
+                      <p className="text-sm text-muted-foreground mt-2">Template chunein ya apna prompt likhein</p>
                     </button>
                   </div>
                 </div>
