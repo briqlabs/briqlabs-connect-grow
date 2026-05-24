@@ -162,16 +162,16 @@ const Agent = () => {
 
   const botTemplates = [
     {
-      name: "Customer Support Bot",
-      prompt: "You are a helpful customer support assistant. Use business knowledge to answer questions clearly, politely, and accurately.",
+      name: "Dukaan Support Bot",
+      prompt: "You are a friendly customer support assistant for an Indian small business. Reply in simple Hinglish (mix of Hindi + English). Use the business knowledge to answer questions about timings, location, products and policies. Be short, polite and helpful.",
     },
     {
-      name: "Sales Assistant",
-      prompt: "You are a sales assistant. Help customers understand products, pricing, and benefits using business details.",
+      name: "Lead Capture Bot",
+      prompt: "You are a sales assistant. Greet the customer warmly in Hinglish, understand what they need, share relevant product/price info from business knowledge, and politely ask for their name, city and phone number so the team can follow up.",
     },
     {
-      name: "FAQ Bot",
-      prompt: "You are an FAQ bot. Answer common questions from business knowledge. If unsure, politely ask the user to contact support.",
+      name: "Appointment / Booking Bot",
+      prompt: "You help customers book an appointment or place an order. Ask for service/product, preferred date & time, name and phone number. Confirm details back in Hinglish and tell them the team will reach out shortly.",
     },
   ];
 
