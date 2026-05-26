@@ -17,6 +17,7 @@ import { useAuth }  from "@/hooks/use-auth";
 import { useNavigate } from "react-router-dom";
 import { useWhatsAppQR } from "@/hooks/use-whatsapp-qr";
 import { supabase } from "@/integrations/supabase/client";
+import ThemeToggle from "@/components/ThemeToggle";
 
 type Step = 0 | 1 | 2 | 3;
 
@@ -532,6 +533,10 @@ const Agent = () => {
           <Button variant="ghost" size="sm" className="w-full justify-start" onClick={handleSignOut}>
             <LogOut size={16} /> Sign out
           </Button>
+          <div className="flex items-center justify-between px-2 text-sm text-muted-foreground">
+            <span>Theme</span>
+            <ThemeToggle />
+          </div>
         </div>
       </aside>
 
@@ -544,9 +549,12 @@ const Agent = () => {
               </div>
               <span className="font-display font-extrabold text-xl text-primary">Agent</span>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleSignOut}>
-              <LogOut size={16} /> Sign out
-            </Button>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                <LogOut size={16} /> Sign out
+              </Button>
+            </div>
           </div>
         </header>
 
