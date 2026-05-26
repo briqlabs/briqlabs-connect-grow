@@ -3,7 +3,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Upload, MessageCircle, Power, Check, ArrowRight, ArrowLeft,
-  Store, FileText, QrCode, Sparkles, LogOut, LayoutDashboard,
+  Store, FileText, QrCode, Sparkles, LogOut, LifeBuoy, LayoutDashboard,
   RefreshCw, Smartphone, Loader2, AlertCircle, Trash2, Pencil, Plus,
 } from "lucide-react";
 import { Button }   from "@/components/ui/button";
@@ -461,6 +461,9 @@ const Agent = () => {
             );
           })}
 
+          <a href="https://wa.me/919999999999" target="_blank" rel="noreferrer" className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+            <LifeBuoy size={16} /> Help
+          </a>
         </nav>
 
         <div className="p-3 border-t border-border space-y-3">
