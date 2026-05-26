@@ -40,7 +40,7 @@ const Index = () => {
       <VoiceAIComingSoon />
       <TestimonialsSection />
       <FAQSection />
-      <CTASection openForm={openForm} />
+      <CTASection />
       <Footer />
       <LeadFormDialog open={dialogOpen} onOpenChange={setDialogOpen} title={dialogTitle} />
     </div>
