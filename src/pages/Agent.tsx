@@ -5,6 +5,7 @@ import {
   Upload, MessageCircle, Power, Check, ArrowRight, ArrowLeft,
   Store, FileText, QrCode, Sparkles, LogOut, LifeBuoy, LayoutDashboard,
   RefreshCw, Smartphone, Loader2, AlertCircle, Trash2, Pencil, Plus,
+  GraduationCap, Home, Stethoscope, Sofa, Rocket, PlayCircle, HelpCircle,
 } from "lucide-react";
 import { Button }   from "@/components/ui/button";
 import { Input }    from "@/components/ui/input";
@@ -143,11 +144,12 @@ const Agent = () => {
   const [botPrompt, setBotPrompt] = useState("");
   const [editingBotId, setEditingBotId] = useState<string | null>(null);
   const [botEntries, setBotEntries] = useState<Array<{ id: string; name: string; prompt: string; is_active: boolean; created_at: string; updated_at: string }>>([]);
+  const [vertical, setVertical] = useState<"coaching" | "realestate" | "clinic" | "interior" | null>(null);
 
   const steps = [
-    { label: "Business Info",    icon: Store },
-    { label: "Connect WhatsApp", icon: MessageCircle },
-    { label: "Turn ON AI",       icon: Power },
+    { label: "Business",      sub: "Details bharo",     icon: Store },
+    { label: "WhatsApp",      sub: "QR scan karo",      icon: MessageCircle },
+    { label: "AI Chalu Karo", sub: "Go live 🚀",         icon: Power },
   ];
   const sideNav = [
     { label: "Dashboard", icon: LayoutDashboard, targetStep: 3 as Step },
@@ -160,20 +162,56 @@ const Agent = () => {
   const canNextFrom1 = whatsappConnected;
   const canNextFrom2 = aiOn && botEntries.length > 0;
 
+  const verticals = [
+    { id: "coaching" as const,   label: "Coaching / EdTech",        icon: GraduationCap, hint: "Demo class, fees, batch timings" },
+    { id: "realestate" as const, label: "Real Estate / Brokers",    icon: Home,          hint: "Site visit, brochure, locality" },
+    { id: "clinic" as const,     label: "Clinics / Salons",         icon: Stethoscope,   hint: "Appointment, services, pricing" },
+    { id: "interior" as const,   label: "Interior Designers",       icon: Sofa,          hint: "Portfolio, quote, consultation" },
+  ];
+
+  const verticalTemplates: Record<string, { title: string; description: string }> = {
+    coaching:   { title: "Course & batch details",  description: "Jaise: NEET batch — Mon–Sat 6 PM, fees ₹25,000, demo class free." },
+    realestate: { title: "Property listing",        description: "Jaise: 2BHK Andheri West, ₹1.8 Cr, site visit available weekends." },
+    clinic:     { title: "Services & timings",      description: "Jaise: Dental cleaning ₹800, Mon–Sat 10 AM–8 PM, appointment via WhatsApp." },
+    interior:   { title: "Services offered",        description: "Jaise: Full home interior, 2BHK from ₹4 L, free consultation visit." },
+  };
+
   const botTemplates = [
     {
-      name: "Customer Support Bot",
-      prompt: "You are a helpful customer support assistant. Use business knowledge to answer questions clearly, politely, and accurately.",
+      name: "Hinglish Casual",
+      tag: "Most popular",
+      prompt: "Aap ek friendly WhatsApp assistant ho. Hinglish mein casually reply karo (mix Hindi + English). Business knowledge use karke leads ko qualify karo, questions ka jawab do, aur appointment book karne mein help karo. Short, warm messages bhejo — jaise dost baat kar raha ho.",
     },
     {
       name: "Sales Assistant",
-      prompt: "You are a sales assistant. Help customers understand products, pricing, and benefits using business details.",
+      tag: "Lead conversion",
+      prompt: "You are a polite sales assistant. Use business info to share pricing, benefits, and next steps. Ask qualifying questions (budget, timeline, location) and offer to book a demo or site visit.",
+    },
+    {
+      name: "Customer Support",
+      tag: "Service queries",
+      prompt: "You are a helpful customer support assistant. Use business knowledge to answer questions clearly, politely, and accurately. If unsure, ask user to share more details.",
     },
     {
       name: "FAQ Bot",
+      tag: "Quick answers",
       prompt: "You are an FAQ bot. Answer common questions from business knowledge. If unsure, politely ask the user to contact support.",
     },
   ];
+
+  const personalityChips = [
+    { label: "Friendly", suffix: " Tone: warm, friendly, use emojis sparingly." },
+    { label: "Formal", suffix: " Tone: professional and formal." },
+    { label: "Hinglish-casual", suffix: " Tone: casual Hinglish (Hindi + English mix), like talking to a friend." },
+  ];
+
+  const checklist = [
+    { done: infoEntries.length > 0 || fileEntries.length > 0, label: "Business info added", step: 0 as Step },
+    { done: whatsappConnected, label: "WhatsApp connected", step: 1 as Step },
+    { done: aiOn && botEntries.length > 0, label: "AI bot active", step: 2 as Step },
+  ];
+  const checklistDone = checklist.filter((c) => c.done).length;
+  const setupComplete = checklistDone === 3;
 
   useEffect(() => {
     const loadData = async () => {
@@ -322,6 +360,17 @@ const Agent = () => {
     setBotName(name);
     setBotPrompt(prompt);
     setEditingBotId(null);
+  };
+
+  const applyPersonality = (suffix: string) => {
+    setBotPrompt((prev) => (prev.includes(suffix.trim()) ? prev : (prev.trim() + suffix)));
+  };
+
+  const applyVertical = (id: "coaching" | "realestate" | "clinic" | "interior") => {
+    setVertical(id);
+    const t = verticalTemplates[id];
+    if (!businessName) setBusinessName(t.title);
+    if (!businessInfo) setBusinessInfo(t.description);
   };
 
   const editBot = (id: string) => {
@@ -520,9 +569,12 @@ const Agent = () => {
                       }`}>
                         {done ? <Check size={22} /> : <Icon size={22} />}
                       </div>
-                      <span className={`text-xs font-medium text-center ${active || done ? "text-foreground" : "text-muted-foreground"}`}>
-                        {s.label}
-                      </span>
+                      <div className="text-center">
+                        <p className={`text-xs font-semibold ${active || done ? "text-foreground" : "text-muted-foreground"}`}>
+                          {s.label}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground hidden sm:block">{s.sub}</p>
+                      </div>
                     </div>
                     {i < steps.length - 1 && (
                       <div className={`flex-1 h-0.5 mx-2 -mt-6 ${step > i ? "bg-primary" : "bg-border"}`} />
@@ -543,9 +595,33 @@ const Agent = () => {
               >
                 <div className="flex items-center gap-3 mb-2">
                   <Store className="text-primary" />
-                  <h1 className="text-2xl font-display font-bold">Tell us about your business</h1>
+                  <h1 className="text-2xl font-display font-bold">Apne business ke baare mein batao</h1>
                 </div>
-                <p className="text-muted-foreground mb-6">Your AI assistant will use this to answer customers.</p>
+                <p className="text-muted-foreground mb-6">Yeh info se aapka AI agent customers ko reply karega. Jitna detail, utna better.</p>
+
+                <div className="mb-6">
+                  <p className="text-sm font-medium mb-3">Aap kya karte ho? <span className="text-muted-foreground font-normal">(optional — template auto-fill ho jayega)</span></p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {verticals.map((v) => {
+                      const Icon = v.icon;
+                      const active = vertical === v.id;
+                      return (
+                        <button
+                          key={v.id}
+                          type="button"
+                          onClick={() => applyVertical(v.id)}
+                          className={`flex flex-col items-start gap-1 p-3 rounded-xl border text-left transition-all ${
+                            active ? "border-primary bg-primary/10 shadow-sm" : "border-border hover:border-primary/40 hover:bg-muted/40"
+                          }`}
+                        >
+                          <Icon size={18} className={active ? "text-primary" : "text-muted-foreground"} />
+                          <span className="text-xs font-semibold leading-tight">{v.label}</span>
+                          <span className="text-[10px] text-muted-foreground leading-tight">{v.hint}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
                 <div className="space-y-5">
                   <div className="flex rounded-lg border border-border bg-muted/30 p-1 text-sm">
@@ -680,9 +756,20 @@ const Agent = () => {
               >
                 <div className="flex items-center gap-3 mb-2">
                   <MessageCircle className="text-primary" />
-                  <h1 className="text-2xl font-display font-bold">Connect your WhatsApp</h1>
+                  <h1 className="text-2xl font-display font-bold">WhatsApp connect karo</h1>
                 </div>
-                <p className="text-muted-foreground mb-6">Scan the QR code with your WhatsApp app to link your account.</p>
+                <p className="text-muted-foreground mb-6">QR scan karo apne WhatsApp se — 30 second ka kaam hai.</p>
+
+                <div className="mb-6 grid md:grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-border bg-muted/30 p-4">
+                    <p className="text-sm font-semibold mb-1 flex items-center gap-2"><Smartphone size={14} className="text-primary"/> Personal number</p>
+                    <p className="text-xs text-muted-foreground">Apna personal WhatsApp use kar sakte ho — alag SIM ki zaroorat nahi.</p>
+                  </div>
+                  <div className="rounded-xl border border-border bg-muted/30 p-4">
+                    <p className="text-sm font-semibold mb-1 flex items-center gap-2"><MessageCircle size={14} className="text-primary"/> Business number</p>
+                    <p className="text-xs text-muted-foreground">WhatsApp Business app ka number bhi link kar sakte ho. Recommended for SMB.</p>
+                  </div>
+                </div>
 
                 {/* QR panel is mounted only when step === 1 */}
                 <WhatsAppQRPanel
@@ -691,6 +778,16 @@ const Agent = () => {
                     toast.success("WhatsApp connected! 🎉");
                   }}
                 />
+
+                <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
+                  <a href="https://wa.me/919999999999" target="_blank" rel="noreferrer" className="text-primary hover:underline flex items-center gap-1">
+                    <HelpCircle size={14}/> Help me connect
+                  </a>
+                  <span className="text-muted-foreground">·</span>
+                  <button type="button" className="text-muted-foreground hover:text-foreground flex items-center gap-1">
+                    <PlayCircle size={14}/> Watch 30-sec video
+                  </button>
+                </div>
 
                 <div className="flex justify-between mt-8">
                   <Button variant="ghost" onClick={goBack}>
@@ -712,9 +809,33 @@ const Agent = () => {
               >
                 <div className="flex items-center gap-3 mb-2">
                   <Power className="text-primary" />
-                  <h1 className="text-2xl font-display font-bold">AI Bot Configuration</h1>
+                  <h1 className="text-2xl font-display font-bold">AI bot setup karo</h1>
                 </div>
-                <p className="text-muted-foreground mb-6">Create and manage your bot prompts. Use a template or write your own behavior.</p>
+                <p className="text-muted-foreground mb-6">Template choose karo ya apna prompt likho. Hinglish wala SMBs ke liye sabse popular hai.</p>
+
+                {/* Templates first */}
+                {(botEntries.length === 0 || editingBotId) && (
+                <div className="mb-6 rounded-xl border border-border p-5">
+                  <p className="font-semibold mb-1">Templates se shuru karo</p>
+                  <p className="text-sm text-muted-foreground mb-4">Click karke prefill ho jayega — phir edit kar sakte ho.</p>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {botTemplates.map((template) => (
+                      <button
+                        key={template.name}
+                        type="button"
+                        onClick={() => applyTemplate(template.name, template.prompt)}
+                        className="rounded-lg border border-border bg-background p-4 text-left hover:border-primary/50 hover:bg-muted/40 transition-all"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="font-semibold">{template.name}</p>
+                          <span className="text-[10px] uppercase tracking-wide bg-primary/10 text-primary px-2 py-0.5 rounded-full">{template.tag}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground line-clamp-3">{template.prompt}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                )}
 
                 <div className="rounded-xl border border-border p-6 flex items-center justify-between bg-muted/30">
                   <div className="flex items-center gap-4">
@@ -723,7 +844,7 @@ const Agent = () => {
                     </div>
                     <div>
                       <p className="font-semibold text-lg">AI Assistant</p>
-                      <p className="text-sm text-muted-foreground">{aiOn ? "Active - bot can reply using saved prompts" : "Currently off"}</p>
+                      <p className="text-sm text-muted-foreground">{aiOn ? "Chalu hai — bot leads ko reply karega" : "Abhi off hai"}</p>
                     </div>
                   </div>
                   <Switch checked={aiOn} onCheckedChange={setAiOn} className="scale-125" />
@@ -731,12 +852,20 @@ const Agent = () => {
 
                 <div className="mt-6 rounded-xl border border-border bg-muted/30 p-5 space-y-4">
                   <div className="flex items-center justify-between">
-                    <p className="font-semibold">Create Bot</p>
-                    <Button type="button" size="sm" variant="hero" onClick={resetBotForm}>
-                      <Plus size={14} /> New
-                    </Button>
+                    <p className="font-semibold">{editingBotId ? "Edit Bot" : botEntries.length >= 1 ? "Your Bot" : "Create Bot"}</p>
+                    {editingBotId && (
+                      <Button type="button" size="sm" variant="ghost" onClick={resetBotForm}>
+                        Cancel Edit
+                      </Button>
+                    )}
                   </div>
 
+                  {botEntries.length >= 1 && !editingBotId ? (
+                    <div className="rounded-lg border border-dashed border-border bg-background/60 p-4 text-sm text-muted-foreground">
+                      Sirf <strong className="text-foreground">1 AI bot</strong> allowed hai per account. Edit karne ke liye neeche table mein pencil icon dabao, ya delete karke naya banao.
+                    </div>
+                  ) : (
+                  <>
                   <div className="space-y-2">
                     <Label htmlFor="bot-name">Bot Name</Label>
                     <Input
@@ -755,33 +884,27 @@ const Agent = () => {
                       value={botPrompt}
                       onChange={(e) => setBotPrompt(e.target.value)}
                     />
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <span className="text-xs text-muted-foreground self-center">Personality:</span>
+                      {personalityChips.map((p) => (
+                        <button
+                          key={p.label}
+                          type="button"
+                          onClick={() => applyPersonality(p.suffix)}
+                          className="text-xs px-2 py-1 rounded-full border border-border hover:border-primary/50 hover:bg-primary/10 transition-colors"
+                        >
+                          + {p.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <Button type="button" onClick={saveBot} disabled={saving}>
                       {editingBotId ? "Update Bot" : "Create Bot"}
                     </Button>
-                    {editingBotId && (
-                      <Button type="button" variant="ghost" onClick={resetBotForm}>
-                        Cancel Edit
-                      </Button>
-                    )}
                   </div>
-                </div>
-
-                <div className="mt-6 rounded-xl border border-border p-5">
-                  <p className="font-semibold mb-1">Sample Bot Templates</p>
-                  <p className="text-sm text-muted-foreground mb-4">Click a template to prefill the bot form.</p>
-                  <div className="grid gap-3 md:grid-cols-3">
-                    {botTemplates.map((template) => (
-                      <div key={template.name} className="rounded-lg border border-border bg-background p-4">
-                        <p className="font-semibold mb-2">{template.name}</p>
-                        <p className="text-sm text-muted-foreground mb-3">{template.prompt}</p>
-                        <Button type="button" variant="ghost" size="sm" onClick={() => applyTemplate(template.name, template.prompt)}>
-                          Use Template
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
+                  </>
+                  )}
                 </div>
 
                 <div className="mt-6 rounded-xl border border-border overflow-hidden">
@@ -817,7 +940,7 @@ const Agent = () => {
                     <ArrowLeft size={16} /> Back
                   </Button>
                   <Button variant="hero" size="lg" disabled={!canNextFrom2} onClick={() => setStep(3)}>
-                    Finish <ArrowRight size={16} />
+                    Activate Agent — Go Live <Rocket size={16} />
                   </Button>
                 </div>
               </motion.div>
@@ -831,11 +954,51 @@ const Agent = () => {
                 className="space-y-6"
               >
                 <div className="rounded-3xl bg-gradient-to-r from-primary to-accent p-8 text-primary-foreground">
-                  <h1 className="text-4xl font-display font-extrabold mb-3">Welcome Back!</h1>
-                  <p className="text-lg/8 text-primary-foreground/90 max-w-3xl">
-                    Manage your business knowledge, files, WhatsApp connectivity, and AI bots from one place.
+                  <h1 className="text-3xl md:text-4xl font-display font-extrabold mb-2">
+                    {setupComplete ? "Welcome back! Aapka agent live hai 🚀" : "Chalo, agent ready karte hain — 10 min mein live."}
+                  </h1>
+                  <p className="text-base md:text-lg text-primary-foreground/90 max-w-3xl">
+                    {setupComplete
+                      ? "Business knowledge, WhatsApp aur AI bots — sab ek jagah manage karo."
+                      : `${checklistDone} of 3 done. Bas ek-do step aur baaki hai.`}
                   </p>
                 </div>
+
+                {!setupComplete && (
+                  <div className="rounded-2xl border border-border bg-card p-6 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="font-semibold">Setup checklist</p>
+                      <span className="text-xs text-muted-foreground">{checklistDone}/3</span>
+                    </div>
+                    <div className="space-y-2">
+                      {checklist.map((c) => (
+                        <button
+                          key={c.label}
+                          type="button"
+                          onClick={() => setStep(c.step)}
+                          className="w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/40 transition-colors text-left"
+                        >
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${c.done ? "bg-primary text-primary-foreground" : "border-2 border-border"}`}>
+                            {c.done && <Check size={14} />}
+                          </div>
+                          <span className={`flex-1 text-sm ${c.done ? "line-through text-muted-foreground" : "font-medium"}`}>{c.label}</span>
+                          {!c.done && <ArrowRight size={14} className="text-muted-foreground" />}
+                        </button>
+                      ))}
+                    </div>
+                    <Button
+                      variant="hero"
+                      size="lg"
+                      className="w-full"
+                      onClick={() => {
+                        const next = checklist.find((c) => !c.done);
+                        if (next) setStep(next.step);
+                      }}
+                    >
+                      Resume Setup <ArrowRight size={16} />
+                    </Button>
+                  </div>
+                )}
 
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   <div className="rounded-2xl border border-border bg-card p-5">
