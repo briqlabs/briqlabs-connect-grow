@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { ArrowRight, Bot } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Sparkles } from "lucide-react";
 import type { LeadFormOpener } from "@/pages/Index";
 
@@ -35,10 +35,6 @@ const HeroSection = ({ openForm }: { openForm: LeadFormOpener }) => {
             <Button variant="hero" size="lg" className="text-base px-8 py-6" onClick={() => openForm("Start Free Trial")}>
               Start Free Trial
               <ArrowRight size={18} />
-            </Button>
-            <Button variant="hero-outline" size="lg" className="text-base px-8 py-6" onClick={() => openForm("Book a Demo")}>
-              <Bot size={18} />
-              Watch Demo
             </Button>
           </div>
 

@@ -10,7 +10,6 @@ const FAQ = [
   { q: "Setup mein kitna time lagega?", a: "10 minute. QR scan karo, business info daalo, AI bot activate karo — done." },
   { q: "Hindi ya regional language support hai?", a: "Haan. Hindi, English, Hinglish — sab kuch. Customer jis language mein likhe, agent samjhta hai." },
   { q: "Free trial mein kya milta hai?", a: "14 din ke liye full Pro features — bina credit card. Cancel kabhi bhi kar sakte ho." },
-  { q: "GST invoice milti hai?", a: "Haan. Har payment ka proper GST invoice email pe milta hai." },
   { q: "Data privacy ka kya?", a: "Aapka data encrypted hai aur sirf aapke agent ke liye use hota hai. Kabhi share nahi kiya jaata." },
 ];
 

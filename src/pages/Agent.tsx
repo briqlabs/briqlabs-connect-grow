@@ -5,7 +5,7 @@ import {
   Upload, MessageCircle, Power, Check, ArrowRight, ArrowLeft,
   Store, FileText, QrCode, Sparkles, LogOut, LifeBuoy, LayoutDashboard,
   RefreshCw, Smartphone, Loader2, AlertCircle, Trash2, Pencil, Plus,
-  GraduationCap, Home, Stethoscope, Sofa, Rocket, PlayCircle, HelpCircle,
+  GraduationCap, Home, Stethoscope, Sofa, Rocket,
 } from "lucide-react";
 import { Button }   from "@/components/ui/button";
 import { Input }    from "@/components/ui/input";
@@ -185,7 +185,7 @@ const Agent = () => {
     {
       name: "Sales Assistant",
       tag: "Lead conversion",
-      prompt: "You are a polite sales assistant. Use business info to share pricing, benefits, and next steps. Ask qualifying questions (budget, timeline, location) and offer to book a demo or site visit.",
+      prompt: "You are a polite sales assistant. Use business info to share pricing, benefits, and next steps. Ask qualifying questions (budget, timeline, location) and offer to book a site visit or appointment.",
     },
     {
       name: "Customer Support",
@@ -510,7 +510,7 @@ const Agent = () => {
             );
           })}
 
-          <a href="https://wa.me/919999999999" target="_blank" rel="noreferrer" className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+          <a href="https://wa.me/916362094506" target="_blank" rel="noreferrer" className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
             <LifeBuoy size={16} /> Help
           </a>
         </nav>
@@ -778,16 +778,6 @@ const Agent = () => {
                     toast.success("WhatsApp connected! 🎉");
                   }}
                 />
-
-                <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-                  <a href="https://wa.me/919999999999" target="_blank" rel="noreferrer" className="text-primary hover:underline flex items-center gap-1">
-                    <HelpCircle size={14}/> Help me connect
-                  </a>
-                  <span className="text-muted-foreground">·</span>
-                  <button type="button" className="text-muted-foreground hover:text-foreground flex items-center gap-1">
-                    <PlayCircle size={14}/> Watch 30-sec video
-                  </button>
-                </div>
 
                 <div className="flex justify-between mt-8">
                   <Button variant="ghost" onClick={goBack}>
@@ -1071,7 +1061,7 @@ const Agent = () => {
 
           <p className="text-center text-xs text-muted-foreground mt-8">
             Need help? WhatsApp us at{" "}
-            <a href="https://wa.me/919999999999" className="text-primary hover:underline">support</a>
+            <a href="https://wa.me/916362094506" className="text-primary hover:underline">support</a>
           </p>
         </main>
       </div>

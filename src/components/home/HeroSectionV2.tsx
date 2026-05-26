@@ -41,14 +41,10 @@ export default function HeroSectionV2({
               <Button variant="hero" size="lg" className="text-base px-7 py-6" onClick={() => openForm("Start Free Trial")}>
                 Start 14-day free trial <ArrowRight size={18} />
               </Button>
-              <Button variant="hero-outline" size="lg" className="text-base px-7 py-6" onClick={() => openForm("Book a Demo")}>
-                Book a demo
-              </Button>
             </div>
 
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
               <span className="flex items-center gap-1.5"><ShieldCheck size={14} className="text-primary" /> No credit card</span>
-              <span>· GST invoice</span>
               <span>· Hindi · English · Hinglish</span>
             </div>
 

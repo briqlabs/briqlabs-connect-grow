@@ -26,7 +26,7 @@ const scenes: { messages: ChatMessage[]; title: string }[] = [
       { id: 1, text: "Hi! I saw your ad for the CRM software. Can you tell me more about it?", sender: "customer", time: "10:30 AM" },
       { id: 2, text: "Hey there! 👋 Thanks for reaching out. Our CRM helps businesses automate lead tracking, follow-ups, and pipeline management — all from one dashboard.", sender: "ai", time: "10:30 AM" },
       { id: 3, text: "That sounds great! What plans do you offer?", sender: "customer", time: "10:31 AM" },
-      { id: 4, text: "We have 3 plans:\n\n🟢 Starter — $29/mo (up to 500 contacts)\n🔵 Growth — $79/mo (up to 5,000 contacts)\n🟣 Enterprise — Custom pricing\n\nWould you like details on any specific plan?", sender: "ai", time: "10:31 AM" },
+      { id: 4, text: "We can tailor the automation to your lead volume, team size, and follow-up needs.\n\nWould you like help choosing the right setup?", sender: "ai", time: "10:31 AM" },
     ],
   },
   {
