@@ -1,23 +1,53 @@
 import { motion } from "framer-motion";
 import { Link2, Brain, Smile } from "lucide-react";
+import { useLanguage } from "@/hooks/use-language";
 
-const STEPS = [
-  { icon: Link2, title: "Connect karo", desc: "Apna WhatsApp Business number 5 min mein link karo. QR scan — bas." },
-  { icon: Brain, title: "Train karo", desc: "Website link, PDF, ya FAQs daalo. Agent aapke business ko seekh leta hai." },
-  { icon: Smile, title: "Relax", desc: "24×7 agent chats handle karta hai. Aap sirf qualified leads dekho." },
-];
+const icons = [Link2, Brain, Smile];
+
+const copy = {
+  hinglish: {
+    eyebrow: "3 Steps · 10 Minutes",
+    title: "Setup itna easy hai",
+    steps: [
+      { title: "Connect karo", desc: "Apna WhatsApp Business number 5 min mein link karo. QR scan — bas." },
+      { title: "Train karo", desc: "Website link, PDF, ya FAQs daalo. Agent aapke business ko seekh leta hai." },
+      { title: "Relax", desc: "24×7 agent chats handle karta hai. Aap sirf qualified leads dekho." },
+    ],
+  },
+  en: {
+    eyebrow: "3 Steps · 10 Minutes",
+    title: "Setup is that easy",
+    steps: [
+      { title: "Connect", desc: "Link your WhatsApp Business number in 5 minutes. Just scan the QR." },
+      { title: "Train", desc: "Add your website, PDFs, or FAQs. The agent learns your business." },
+      { title: "Relax", desc: "The 24/7 agent handles chats while you focus on qualified leads." },
+    ],
+  },
+  hi: {
+    eyebrow: "3 स्टेप · 10 मिनट",
+    title: "सेटअप इतना आसान है",
+    steps: [
+      { title: "कनेक्ट करें", desc: "अपना WhatsApp Business नंबर 5 मिनट में लिंक करें. बस QR scan करें." },
+      { title: "ट्रेन करें", desc: "Website, PDF या FAQs डालें. Agent आपका business सीख लेता है." },
+      { title: "आराम करें", desc: "24×7 agent chats handle करता है. आप qualified leads पर focus करें." },
+    ],
+  },
+};
 
 export default function HowItWorks() {
+  const { language } = useLanguage();
+  const t = copy[language];
+
   return (
     <section className="py-20 md:py-28 bg-muted/20">
       <div className="container mx-auto px-6">
         <div className="text-center mb-14">
-          <p className="text-sm font-medium text-primary uppercase tracking-wider mb-3">3 Steps · 10 Minutes</p>
-          <h2 className="text-3xl md:text-5xl font-display font-bold">Setup itna easy hai</h2>
+          <p className="text-sm font-medium text-primary uppercase tracking-wider mb-3">{t.eyebrow}</p>
+          <h2 className="text-3xl md:text-5xl font-display font-bold">{t.title}</h2>
         </div>
         <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {STEPS.map((s, i) => {
-            const Icon = s.icon;
+          {t.steps.map((s, i) => {
+            const Icon = icons[i];
             return (
               <motion.div
                 key={s.title}

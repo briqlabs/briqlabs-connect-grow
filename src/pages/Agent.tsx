@@ -18,13 +18,239 @@ import { useNavigate } from "react-router-dom";
 import { useWhatsAppQR } from "@/hooks/use-whatsapp-qr";
 import { supabase } from "@/integrations/supabase/client";
 import ThemeToggle from "@/components/ThemeToggle";
+import LanguageToggle from "@/components/LanguageToggle";
+import { useLanguage } from "@/hooks/use-language";
 
 type Step = 0 | 1 | 2 | 3;
+
+const agentCopy = {
+  hinglish: {
+    connected: "WhatsApp connected",
+    linked: "Your account is linked via QR",
+    generating: "Generating QR…",
+    waiting: "Waiting for QR…",
+    retry: "Retry",
+    qrRefresh: "QR refreshes automatically every 60 s",
+    refreshNow: "Refresh now",
+    howScan: "How to scan",
+    scanSteps: ["Open WhatsApp on your phone", "Go to Settings → Linked Devices → Link a Device", "Point your camera at the QR code above"],
+    steps: [
+      { label: "Business", sub: "Details bharo" },
+      { label: "WhatsApp", sub: "QR scan karo" },
+      { label: "AI Chalu Karo", sub: "Go live" },
+    ],
+    nav: ["Dashboard", "Business Details", "Whatsapp Integration", "AI bot"],
+    help: "Help",
+    signOut: "Sign out",
+    theme: "Theme",
+    step0Title: "Apne business ke baare mein batao",
+    step0Desc: "Yeh info se aapka AI agent customers ko reply karega. Jitna detail, utna better.",
+    verticalPrompt: "Aap kya karte ho?",
+    optional: "(optional — template auto-fill ho jayega)",
+    tabs: ["Business Information", "Business Files"],
+    labels: { title: "Title", description: "Description", created: "Created At", actions: "Actions", file: "File", size: "Size" },
+    placeholders: { businessTitle: "e.g. Store timings", businessDesc: "Write business details your AI should use.", botName: "e.g. Customer Support Bot", botPrompt: "Define how your bot should respond to customers." },
+    addBusiness: "Add Business Information",
+    noBusiness: "No business information added yet.",
+    uploadHelp: "Upload menu / brochure / price list (multiple files supported)",
+    chooseFiles: "Choose files",
+    readyUpload: "Ready to upload",
+    remove: "Remove",
+    uploadFiles: "Upload Files",
+    noFiles: "No files uploaded yet.",
+    next: "Next",
+    back: "Back",
+    step1Title: "WhatsApp connect karo",
+    step1Desc: "QR scan karo apne WhatsApp se — 30 second ka kaam hai.",
+    personal: "Personal number",
+    personalDesc: "Apna personal WhatsApp use kar sakte ho — alag SIM ki zaroorat nahi.",
+    businessNumber: "Business number",
+    businessNumberDesc: "WhatsApp Business app ka number bhi link kar sakte ho. Recommended for SMB.",
+    step2Title: "AI bot setup karo",
+    step2Desc: "Template choose karo ya apna prompt likho. Hinglish wala SMBs ke liye sabse popular hai.",
+    templatesTitle: "Templates se shuru karo",
+    templatesDesc: "Click karke prefill ho jayega — phir edit kar sakte ho.",
+    aiAssistant: "AI Assistant",
+    aiOn: "Chalu hai — bot leads ko reply karega",
+    aiOff: "Abhi off hai",
+    editBot: "Edit Bot",
+    yourBot: "Your Bot",
+    createBot: "Create Bot",
+    cancelEdit: "Cancel Edit",
+    oneBot: "Sirf 1 AI bot allowed hai per account. Edit karne ke liye neeche table mein pencil icon dabao, ya delete karke naya banao.",
+    botName: "Bot Name",
+    botPrompt: "Bot Prompt",
+    personality: "Personality:",
+    updateBot: "Update Bot",
+    table: { bot: "Bot", prompt: "Prompt", status: "Status", active: "Active", inactive: "Inactive", noBots: "No bots created yet." },
+    finish: "Activate Agent — Go Live",
+    dashboardReady: "Welcome back! Aapka agent live hai",
+    dashboardTodo: "Chalo, agent ready karte hain — 10 min mein live.",
+    manage: "Business knowledge, WhatsApp aur AI bots — sab ek jagah manage karo.",
+    progress: (n: number) => `${n} of 3 done. Bas ek-do step aur baaki hai.`,
+    checklistTitle: "Setup checklist",
+    resume: "Resume Setup",
+    stats: ["Business Information", "Business Files", "WhatsApp Connections", "Active AI Bots"],
+    quick: "Quick Actions",
+    quickCards: [["Add Business Info", "Build your knowledge base"], ["Connect WhatsApp", "Enable messaging channel"], ["Create AI Bot", "Configure prompt automation"]],
+    checklist: ["Business info added", "WhatsApp connected", "AI bot active"],
+    support: "Need help? WhatsApp us at",
+    supportLink: "support",
+  },
+  en: {
+    connected: "WhatsApp connected",
+    linked: "Your account is linked via QR",
+    generating: "Generating QR…",
+    waiting: "Waiting for QR…",
+    retry: "Retry",
+    qrRefresh: "QR refreshes automatically every 60 seconds",
+    refreshNow: "Refresh now",
+    howScan: "How to scan",
+    scanSteps: ["Open WhatsApp on your phone", "Go to Settings → Linked Devices → Link a Device", "Point your camera at the QR code above"],
+    steps: [
+      { label: "Business", sub: "Add details" },
+      { label: "WhatsApp", sub: "Scan QR" },
+      { label: "Turn On AI", sub: "Go live" },
+    ],
+    nav: ["Dashboard", "Business Details", "WhatsApp Integration", "AI bot"],
+    help: "Help",
+    signOut: "Sign out",
+    theme: "Theme",
+    step0Title: "Tell us about your business",
+    step0Desc: "Your AI agent will use this information to answer customers. More detail means better replies.",
+    verticalPrompt: "What type of business do you run?",
+    optional: "(optional — this will auto-fill a template)",
+    tabs: ["Business Information", "Business Files"],
+    labels: { title: "Title", description: "Description", created: "Created At", actions: "Actions", file: "File", size: "Size" },
+    placeholders: { businessTitle: "e.g. Store timings", businessDesc: "Write business details your AI should use.", botName: "e.g. Customer Support Bot", botPrompt: "Define how your bot should respond to customers." },
+    addBusiness: "Add Business Information",
+    noBusiness: "No business information added yet.",
+    uploadHelp: "Upload menu, brochure, or price list (multiple files supported)",
+    chooseFiles: "Choose files",
+    readyUpload: "Ready to upload",
+    remove: "Remove",
+    uploadFiles: "Upload Files",
+    noFiles: "No files uploaded yet.",
+    next: "Next",
+    back: "Back",
+    step1Title: "Connect your WhatsApp",
+    step1Desc: "Scan the QR with WhatsApp. It takes about 30 seconds.",
+    personal: "Personal number",
+    personalDesc: "You can use your personal WhatsApp number. No separate SIM is required.",
+    businessNumber: "Business number",
+    businessNumberDesc: "You can also link a WhatsApp Business app number. Recommended for SMBs.",
+    step2Title: "Set up your AI bot",
+    step2Desc: "Choose a template or write your own prompt. Hinglish is most popular for SMBs.",
+    templatesTitle: "Start with a template",
+    templatesDesc: "Click to prefill the form, then edit it as needed.",
+    aiAssistant: "AI Assistant",
+    aiOn: "On — the bot can reply to leads",
+    aiOff: "Currently off",
+    editBot: "Edit Bot",
+    yourBot: "Your Bot",
+    createBot: "Create Bot",
+    cancelEdit: "Cancel Edit",
+    oneBot: "Only 1 AI bot is allowed per account. Use the pencil icon below to edit it, or delete it to create a new one.",
+    botName: "Bot Name",
+    botPrompt: "Bot Prompt",
+    personality: "Personality:",
+    updateBot: "Update Bot",
+    table: { bot: "Bot", prompt: "Prompt", status: "Status", active: "Active", inactive: "Inactive", noBots: "No bots created yet." },
+    finish: "Activate Agent — Go Live",
+    dashboardReady: "Welcome back! Your agent is live",
+    dashboardTodo: "Let’s get your agent ready — live in 10 minutes.",
+    manage: "Manage business knowledge, WhatsApp, and AI bots from one place.",
+    progress: (n: number) => `${n} of 3 done. Just a few steps left.`,
+    checklistTitle: "Setup checklist",
+    resume: "Resume Setup",
+    stats: ["Business Information", "Business Files", "WhatsApp Connections", "Active AI Bots"],
+    quick: "Quick Actions",
+    quickCards: [["Add Business Info", "Build your knowledge base"], ["Connect WhatsApp", "Enable messaging channel"], ["Create AI Bot", "Configure prompt automation"]],
+    checklist: ["Business info added", "WhatsApp connected", "AI bot active"],
+    support: "Need help? WhatsApp us at",
+    supportLink: "support",
+  },
+  hi: {
+    connected: "WhatsApp connected",
+    linked: "आपका account QR से link हो गया है",
+    generating: "QR generate हो रहा है…",
+    waiting: "QR का इंतजार है…",
+    retry: "फिर कोशिश करें",
+    qrRefresh: "QR हर 60 seconds में automatically refresh होता है",
+    refreshNow: "अभी refresh करें",
+    howScan: "Scan कैसे करें",
+    scanSteps: ["Phone में WhatsApp खोलें", "Settings → Linked Devices → Link a Device पर जाएँ", "Camera को ऊपर दिए QR code पर point करें"],
+    steps: [
+      { label: "Business", sub: "Details भरें" },
+      { label: "WhatsApp", sub: "QR scan करें" },
+      { label: "AI चालू करें", sub: "Go live" },
+    ],
+    nav: ["Dashboard", "Business Details", "WhatsApp Integration", "AI bot"],
+    help: "Help",
+    signOut: "Sign out",
+    theme: "Theme",
+    step0Title: "अपने business के बारे में बताएं",
+    step0Desc: "आपका AI agent इसी info से customers को reply करेगा. जितनी detail, उतना बेहतर.",
+    verticalPrompt: "आप क्या करते हैं?",
+    optional: "(optional — template auto-fill हो जाएगा)",
+    tabs: ["Business Information", "Business Files"],
+    labels: { title: "Title", description: "Description", created: "Created At", actions: "Actions", file: "File", size: "Size" },
+    placeholders: { businessTitle: "e.g. Store timings", businessDesc: "AI के लिए business details लिखें.", botName: "e.g. Customer Support Bot", botPrompt: "Bot customers को कैसे reply करे, यह define करें." },
+    addBusiness: "Business Information जोड़ें",
+    noBusiness: "अभी कोई business information add नहीं की गई.",
+    uploadHelp: "Menu / brochure / price list upload करें (multiple files supported)",
+    chooseFiles: "Files चुनें",
+    readyUpload: "Upload के लिए ready",
+    remove: "Remove",
+    uploadFiles: "Files Upload करें",
+    noFiles: "अभी कोई files upload नहीं हुई.",
+    next: "Next",
+    back: "Back",
+    step1Title: "WhatsApp connect करें",
+    step1Desc: "अपने WhatsApp से QR scan करें — 30 seconds का काम है.",
+    personal: "Personal number",
+    personalDesc: "आप personal WhatsApp use कर सकते हैं — अलग SIM की जरूरत नहीं.",
+    businessNumber: "Business number",
+    businessNumberDesc: "WhatsApp Business app का number भी link कर सकते हैं. SMBs के लिए recommended.",
+    step2Title: "AI bot setup करें",
+    step2Desc: "Template चुनें या अपना prompt लिखें. SMBs के लिए Hinglish सबसे popular है.",
+    templatesTitle: "Template से शुरू करें",
+    templatesDesc: "Click करने पर prefill होगा — फिर edit कर सकते हैं.",
+    aiAssistant: "AI Assistant",
+    aiOn: "चालू है — bot leads को reply करेगा",
+    aiOff: "अभी off है",
+    editBot: "Bot edit करें",
+    yourBot: "आपका Bot",
+    createBot: "Bot बनाएं",
+    cancelEdit: "Edit cancel करें",
+    oneBot: "हर account में सिर्फ 1 AI bot allowed है. Edit करने के लिए नीचे pencil icon दबाएँ, या delete करके नया बनाएं.",
+    botName: "Bot Name",
+    botPrompt: "Bot Prompt",
+    personality: "Personality:",
+    updateBot: "Bot Update करें",
+    table: { bot: "Bot", prompt: "Prompt", status: "Status", active: "Active", inactive: "Inactive", noBots: "अभी कोई bot नहीं बना." },
+    finish: "Agent Activate करें — Go Live",
+    dashboardReady: "Welcome back! आपका agent live है",
+    dashboardTodo: "चलिए, agent ready करते हैं — 10 min में live.",
+    manage: "Business knowledge, WhatsApp और AI bots — सब एक जगह manage करें.",
+    progress: (n: number) => `${n} of 3 done. बस कुछ steps बाकी हैं.`,
+    checklistTitle: "Setup checklist",
+    resume: "Setup Resume करें",
+    stats: ["Business Information", "Business Files", "WhatsApp Connections", "Active AI Bots"],
+    quick: "Quick Actions",
+    quickCards: [["Business Info जोड़ें", "Knowledge base बनाएं"], ["WhatsApp connect करें", "Messaging channel enable करें"], ["AI Bot बनाएं", "Prompt automation configure करें"]],
+    checklist: ["Business info add हुआ", "WhatsApp connected", "AI bot active"],
+    support: "Help चाहिए? WhatsApp us at",
+    supportLink: "support",
+  },
+};
 
 // ── WhatsApp QR panel (isolated so the hook only runs when step === 1) ────────
 
 function WhatsAppQRPanel({ onConnected }: { onConnected: () => void }) {
   const { status, qrBase64, connected, error, refresh } = useWhatsAppQR();
+  const { language } = useLanguage();
+  const t = agentCopy[language];
 
   // Notify parent as soon as we're connected
   useEffect(() => {
@@ -38,8 +264,8 @@ function WhatsAppQRPanel({ onConnected }: { onConnected: () => void }) {
           <Check size={20} />
         </div>
         <div>
-          <p className="font-semibold">WhatsApp connected</p>
-          <p className="text-sm text-muted-foreground">Your account is linked via QR</p>
+          <p className="font-semibold">{t.connected}</p>
+          <p className="text-sm text-muted-foreground">{t.linked}</p>
         </div>
       </div>
     );
@@ -55,7 +281,7 @@ function WhatsAppQRPanel({ onConnected }: { onConnected: () => void }) {
           {status === "loading" && (
             <div className="flex flex-col items-center gap-3 text-muted-foreground">
               <Loader2 size={40} className="animate-spin text-primary" />
-              <p className="text-sm">Generating QR…</p>
+              <p className="text-sm">{t.generating}</p>
             </div>
           )}
 
@@ -72,7 +298,7 @@ function WhatsAppQRPanel({ onConnected }: { onConnected: () => void }) {
           {status === "qr_ready" && !qrBase64 && (
             <div className="flex flex-col items-center gap-3 text-muted-foreground">
               <QrCode size={48} className="opacity-30" />
-              <p className="text-sm">Waiting for QR…</p>
+              <p className="text-sm">{t.waiting}</p>
             </div>
           )}
 
@@ -82,21 +308,21 @@ function WhatsAppQRPanel({ onConnected }: { onConnected: () => void }) {
               <AlertCircle size={36} className="text-destructive" />
               <p className="text-xs">{error ?? "Something went wrong"}</p>
               <Button variant="outline" size="sm" onClick={() => refresh()}>
-                <RefreshCw size={14} /> Retry
+                <RefreshCw size={14} /> {t.retry}
               </Button>
             </div>
           )}
         </div>
 
         <div className="flex items-center gap-2">
-          <p className="text-xs text-muted-foreground">QR refreshes automatically every 60 s</p>
+          <p className="text-xs text-muted-foreground">{t.qrRefresh}</p>
           {status === "qr_ready" && (
             <button
               type="button"
               className="text-xs text-primary hover:underline flex items-center gap-1"
               onClick={() => refresh()}
             >
-              <RefreshCw size={11} /> Refresh now
+              <RefreshCw size={11} /> {t.refreshNow}
             </button>
           )}
         </div>
@@ -105,20 +331,20 @@ function WhatsAppQRPanel({ onConnected }: { onConnected: () => void }) {
       {/* How-to instructions */}
       <div className="rounded-xl bg-muted/40 border border-border p-4 space-y-3">
         <p className="text-sm font-semibold flex items-center gap-2">
-          <Smartphone size={15} className="text-primary" /> How to scan
+          <Smartphone size={15} className="text-primary" /> {t.howScan}
         </p>
         <ol className="space-y-2 text-sm text-muted-foreground list-none">
           <li className="flex items-start gap-2">
             <span className="w-5 h-5 rounded-full bg-primary/15 text-primary text-xs flex items-center justify-center font-bold flex-shrink-0 mt-0.5">1</span>
-            Open WhatsApp on your phone
+            {t.scanSteps[0]}
           </li>
           <li className="flex items-start gap-2">
             <span className="w-5 h-5 rounded-full bg-primary/15 text-primary text-xs flex items-center justify-center font-bold flex-shrink-0 mt-0.5">2</span>
-            Go to <strong>Settings → Linked Devices → Link a Device</strong>
+            {t.scanSteps[1]}
           </li>
           <li className="flex items-start gap-2">
             <span className="w-5 h-5 rounded-full bg-primary/15 text-primary text-xs flex items-center justify-center font-bold flex-shrink-0 mt-0.5">3</span>
-            Point your camera at the QR code above
+            {t.scanSteps[2]}
           </li>
         </ol>
       </div>
@@ -131,6 +357,8 @@ function WhatsAppQRPanel({ onConnected }: { onConnected: () => void }) {
 const Agent = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { language } = useLanguage();
+  const t = agentCopy[language];
   const [step, setStep] = useState<Step>(0);
   const [businessName, setBusinessName] = useState("");
   const [businessInfo, setBusinessInfo] = useState("");
@@ -148,15 +376,15 @@ const Agent = () => {
   const [vertical, setVertical] = useState<"coaching" | "realestate" | "clinic" | "interior" | null>(null);
 
   const steps = [
-    { label: "Business",      sub: "Details bharo",     icon: Store },
-    { label: "WhatsApp",      sub: "QR scan karo",      icon: MessageCircle },
-    { label: "AI Chalu Karo", sub: "Go live 🚀",         icon: Power },
+    { ...t.steps[0], icon: Store },
+    { ...t.steps[1], icon: MessageCircle },
+    { ...t.steps[2], icon: Power },
   ];
   const sideNav = [
-    { label: "Dashboard", icon: LayoutDashboard, targetStep: 3 as Step },
-    { label: "Business Details", icon: Store, targetStep: 0 as Step },
-    { label: "Whatsapp Integration", icon: MessageCircle, targetStep: 1 as Step },
-    { label: "AI bot", icon: Sparkles, targetStep: 2 as Step },
+    { label: t.nav[0], icon: LayoutDashboard, targetStep: 3 as Step },
+    { label: t.nav[1], icon: Store, targetStep: 0 as Step },
+    { label: t.nav[2], icon: MessageCircle, targetStep: 1 as Step },
+    { label: t.nav[3], icon: Sparkles, targetStep: 2 as Step },
   ];
 
   const canNextFrom0 = infoEntries.length > 0 || fileEntries.length > 0;
@@ -207,9 +435,9 @@ const Agent = () => {
   ];
 
   const checklist = [
-    { done: infoEntries.length > 0 || fileEntries.length > 0, label: "Business info added", step: 0 as Step },
-    { done: whatsappConnected, label: "WhatsApp connected", step: 1 as Step },
-    { done: aiOn && botEntries.length > 0, label: "AI bot active", step: 2 as Step },
+    { done: infoEntries.length > 0 || fileEntries.length > 0, label: t.checklist[0], step: 0 as Step },
+    { done: whatsappConnected, label: t.checklist[1], step: 1 as Step },
+    { done: aiOn && botEntries.length > 0, label: t.checklist[2], step: 2 as Step },
   ];
   const checklistDone = checklist.filter((c) => c.done).length;
   const setupComplete = checklistDone === 3;
@@ -512,7 +740,7 @@ const Agent = () => {
           })}
 
           <a href="https://wa.me/916362094506" target="_blank" rel="noreferrer" className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
-            <LifeBuoy size={16} /> Help
+            <LifeBuoy size={16} /> {t.help}
           </a>
         </nav>
 
@@ -531,11 +759,14 @@ const Agent = () => {
             </div>
           </div>
           <Button variant="ghost" size="sm" className="w-full justify-start" onClick={handleSignOut}>
-            <LogOut size={16} /> Sign out
+            <LogOut size={16} /> {t.signOut}
           </Button>
           <div className="flex items-center justify-between px-2 text-sm text-muted-foreground">
-            <span>Theme</span>
-            <ThemeToggle />
+            <span>{t.theme}</span>
+            <div className="flex items-center gap-1">
+              <LanguageToggle />
+              <ThemeToggle />
+            </div>
           </div>
         </div>
       </aside>
@@ -550,9 +781,10 @@ const Agent = () => {
               <span className="font-display font-extrabold text-xl text-primary">Agent</span>
             </div>
             <div className="flex items-center gap-2">
+              <LanguageToggle />
               <ThemeToggle />
               <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                <LogOut size={16} /> Sign out
+                <LogOut size={16} /> {t.signOut}
               </Button>
             </div>
           </div>
@@ -603,12 +835,12 @@ const Agent = () => {
               >
                 <div className="flex items-center gap-3 mb-2">
                   <Store className="text-primary" />
-                  <h1 className="text-2xl font-display font-bold">Apne business ke baare mein batao</h1>
+                  <h1 className="text-2xl font-display font-bold">{t.step0Title}</h1>
                 </div>
-                <p className="text-muted-foreground mb-6">Yeh info se aapka AI agent customers ko reply karega. Jitna detail, utna better.</p>
+                <p className="text-muted-foreground mb-6">{t.step0Desc}</p>
 
                 <div className="mb-6">
-                  <p className="text-sm font-medium mb-3">Aap kya karte ho? <span className="text-muted-foreground font-normal">(optional — template auto-fill ho jayega)</span></p>
+                  <p className="text-sm font-medium mb-3">{t.verticalPrompt} <span className="text-muted-foreground font-normal">{t.optional}</span></p>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                     {verticals.map((v) => {
                       const Icon = v.icon;
@@ -638,44 +870,44 @@ const Agent = () => {
                       onClick={() => setActiveTab("info")}
                       className={`px-3 py-1.5 rounded-md ${activeTab === "info" ? "bg-background text-foreground" : "text-muted-foreground"}`}
                     >
-                      Business Information
+                      {t.tabs[0]}
                     </button>
                     <button
                       type="button"
                       onClick={() => setActiveTab("files")}
                       className={`px-3 py-1.5 rounded-md ${activeTab === "files" ? "bg-background text-foreground" : "text-muted-foreground"}`}
                     >
-                      Business Files
+                      {t.tabs[1]}
                     </button>
                   </div>
 
                   {activeTab === "info" ? (
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="bn">Title</Label>
-                        <Input id="bn" placeholder="e.g. Store timings" value={businessName} onChange={(e) => setBusinessName(e.target.value)} />
+                        <Label htmlFor="bn">{t.labels.title}</Label>
+                        <Input id="bn" placeholder={t.placeholders.businessTitle} value={businessName} onChange={(e) => setBusinessName(e.target.value)} />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="bi">Description</Label>
+                        <Label htmlFor="bi">{t.labels.description}</Label>
                         <Textarea
                           id="bi" rows={4}
-                          placeholder="Write business details your AI should use."
+                          placeholder={t.placeholders.businessDesc}
                           value={businessInfo} onChange={(e) => setBusinessInfo(e.target.value)}
                         />
                       </div>
                       <Button type="button" variant="hero" onClick={addBusinessInformation} disabled={saving}>
-                        Add Business Information
+                        {t.addBusiness}
                       </Button>
 
                       <div className="rounded-xl border border-border overflow-hidden">
                         <div className="grid grid-cols-12 px-4 py-3 text-xs uppercase text-muted-foreground border-b border-border">
-                          <span className="col-span-3">Name</span>
-                          <span className="col-span-5">Description</span>
-                          <span className="col-span-3">Created At</span>
-                          <span className="col-span-1 text-right">Actions</span>
+                          <span className="col-span-3">{t.labels.title}</span>
+                          <span className="col-span-5">{t.labels.description}</span>
+                          <span className="col-span-3">{t.labels.created}</span>
+                          <span className="col-span-1 text-right">{t.labels.actions}</span>
                         </div>
                         {infoEntries.length === 0 ? (
-                          <p className="p-4 text-sm text-muted-foreground">No business information added yet.</p>
+                          <p className="p-4 text-sm text-muted-foreground">{t.noBusiness}</p>
                         ) : (
                           infoEntries.map((entry) => (
                             <div key={entry.id} className="grid grid-cols-12 px-4 py-3 text-sm border-b border-border last:border-b-0">
@@ -696,38 +928,38 @@ const Agent = () => {
                     <div className="space-y-4">
                       <div className="rounded-xl border border-dashed border-border p-5 text-center bg-muted/30">
                         <FileText className="mx-auto text-muted-foreground mb-2" />
-                        <p className="text-sm text-muted-foreground mb-3">Upload menu / brochure / price list (multiple files supported)</p>
+                        <p className="text-sm text-muted-foreground mb-3">{t.uploadHelp}</p>
                         <label className="inline-flex items-center gap-2 cursor-pointer text-sm font-medium text-primary hover:underline">
                           <Upload size={16} />
-                          Choose files
+                          {t.chooseFiles}
                           <input type="file" multiple className="hidden" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx" onChange={handleFiles} />
                         </label>
                       </div>
 
                       {pendingFiles.length > 0 && (
                         <div className="rounded-xl border border-border p-3 space-y-2">
-                          <p className="text-sm font-medium">Ready to upload</p>
+                          <p className="text-sm font-medium">{t.readyUpload}</p>
                           {pendingFiles.map((f) => (
                             <div key={`${f.name}-${f.size}`} className="flex items-center justify-between text-sm">
                               <span>{f.name}</span>
                               <Button type="button" size="sm" variant="ghost" onClick={() => removePendingFile(f.name)}>
-                                Remove
+                                {t.remove}
                               </Button>
                             </div>
                           ))}
-                          <Button type="button" onClick={uploadBusinessFiles} disabled={saving}>Upload Files</Button>
+                          <Button type="button" onClick={uploadBusinessFiles} disabled={saving}>{t.uploadFiles}</Button>
                         </div>
                       )}
 
                       <div className="rounded-xl border border-border overflow-hidden">
                         <div className="grid grid-cols-12 px-4 py-3 text-xs uppercase text-muted-foreground border-b border-border">
-                          <span className="col-span-5">File</span>
-                          <span className="col-span-3">Size</span>
-                          <span className="col-span-3">Created At</span>
-                          <span className="col-span-1 text-right">Actions</span>
+                          <span className="col-span-5">{t.labels.file}</span>
+                          <span className="col-span-3">{t.labels.size}</span>
+                          <span className="col-span-3">{t.labels.created}</span>
+                          <span className="col-span-1 text-right">{t.labels.actions}</span>
                         </div>
                         {fileEntries.length === 0 ? (
-                          <p className="p-4 text-sm text-muted-foreground">No files uploaded yet.</p>
+                          <p className="p-4 text-sm text-muted-foreground">{t.noFiles}</p>
                         ) : (
                           fileEntries.map((entry) => (
                             <div key={entry.id} className="grid grid-cols-12 px-4 py-3 text-sm border-b border-border last:border-b-0">
@@ -749,7 +981,7 @@ const Agent = () => {
 
                 <div className="flex justify-end mt-8">
                   <Button variant="hero" size="lg" disabled={!canNextFrom0 || saving} onClick={goNext}>
-                    Next <ArrowRight size={16} />
+                    {t.next} <ArrowRight size={16} />
                   </Button>
                 </div>
               </motion.div>
@@ -764,18 +996,18 @@ const Agent = () => {
               >
                 <div className="flex items-center gap-3 mb-2">
                   <MessageCircle className="text-primary" />
-                  <h1 className="text-2xl font-display font-bold">WhatsApp connect karo</h1>
+                  <h1 className="text-2xl font-display font-bold">{t.step1Title}</h1>
                 </div>
-                <p className="text-muted-foreground mb-6">QR scan karo apne WhatsApp se — 30 second ka kaam hai.</p>
+                <p className="text-muted-foreground mb-6">{t.step1Desc}</p>
 
                 <div className="mb-6 grid md:grid-cols-2 gap-3">
                   <div className="rounded-xl border border-border bg-muted/30 p-4">
-                    <p className="text-sm font-semibold mb-1 flex items-center gap-2"><Smartphone size={14} className="text-primary"/> Personal number</p>
-                    <p className="text-xs text-muted-foreground">Apna personal WhatsApp use kar sakte ho — alag SIM ki zaroorat nahi.</p>
+                    <p className="text-sm font-semibold mb-1 flex items-center gap-2"><Smartphone size={14} className="text-primary"/> {t.personal}</p>
+                    <p className="text-xs text-muted-foreground">{t.personalDesc}</p>
                   </div>
                   <div className="rounded-xl border border-border bg-muted/30 p-4">
-                    <p className="text-sm font-semibold mb-1 flex items-center gap-2"><MessageCircle size={14} className="text-primary"/> Business number</p>
-                    <p className="text-xs text-muted-foreground">WhatsApp Business app ka number bhi link kar sakte ho. Recommended for SMB.</p>
+                    <p className="text-sm font-semibold mb-1 flex items-center gap-2"><MessageCircle size={14} className="text-primary"/> {t.businessNumber}</p>
+                    <p className="text-xs text-muted-foreground">{t.businessNumberDesc}</p>
                   </div>
                 </div>
 
@@ -789,10 +1021,10 @@ const Agent = () => {
 
                 <div className="flex justify-between mt-8">
                   <Button variant="ghost" onClick={goBack}>
-                    <ArrowLeft size={16} /> Back
+                    <ArrowLeft size={16} /> {t.back}
                   </Button>
                   <Button variant="hero" size="lg" disabled={!canNextFrom1} onClick={goNext}>
-                    Next <ArrowRight size={16} />
+                    {t.next} <ArrowRight size={16} />
                   </Button>
                 </div>
               </motion.div>
@@ -807,15 +1039,15 @@ const Agent = () => {
               >
                 <div className="flex items-center gap-3 mb-2">
                   <Power className="text-primary" />
-                  <h1 className="text-2xl font-display font-bold">AI bot setup karo</h1>
+                  <h1 className="text-2xl font-display font-bold">{t.step2Title}</h1>
                 </div>
-                <p className="text-muted-foreground mb-6">Template choose karo ya apna prompt likho. Hinglish wala SMBs ke liye sabse popular hai.</p>
+                <p className="text-muted-foreground mb-6">{t.step2Desc}</p>
 
                 {/* Templates first */}
                 {(botEntries.length === 0 || editingBotId) && (
                 <div className="mb-6 rounded-xl border border-border p-5">
-                  <p className="font-semibold mb-1">Templates se shuru karo</p>
-                  <p className="text-sm text-muted-foreground mb-4">Click karke prefill ho jayega — phir edit kar sakte ho.</p>
+                  <p className="font-semibold mb-1">{t.templatesTitle}</p>
+                  <p className="text-sm text-muted-foreground mb-4">{t.templatesDesc}</p>
                   <div className="grid gap-3 md:grid-cols-2">
                     {botTemplates.map((template) => (
                       <button
@@ -841,8 +1073,8 @@ const Agent = () => {
                       <Sparkles size={26} />
                     </div>
                     <div>
-                      <p className="font-semibold text-lg">AI Assistant</p>
-                      <p className="text-sm text-muted-foreground">{aiOn ? "Chalu hai — bot leads ko reply karega" : "Abhi off hai"}</p>
+                      <p className="font-semibold text-lg">{t.aiAssistant}</p>
+                      <p className="text-sm text-muted-foreground">{aiOn ? t.aiOn : t.aiOff}</p>
                     </div>
                   </div>
                   <Switch checked={aiOn} onCheckedChange={setAiOn} className="scale-125" />
@@ -850,40 +1082,40 @@ const Agent = () => {
 
                 <div className="mt-6 rounded-xl border border-border bg-muted/30 p-5 space-y-4">
                   <div className="flex items-center justify-between">
-                    <p className="font-semibold">{editingBotId ? "Edit Bot" : botEntries.length >= 1 ? "Your Bot" : "Create Bot"}</p>
+                    <p className="font-semibold">{editingBotId ? t.editBot : botEntries.length >= 1 ? t.yourBot : t.createBot}</p>
                     {editingBotId && (
                       <Button type="button" size="sm" variant="ghost" onClick={resetBotForm}>
-                        Cancel Edit
+                        {t.cancelEdit}
                       </Button>
                     )}
                   </div>
 
                   {botEntries.length >= 1 && !editingBotId ? (
                     <div className="rounded-lg border border-dashed border-border bg-background/60 p-4 text-sm text-muted-foreground">
-                      Sirf <strong className="text-foreground">1 AI bot</strong> allowed hai per account. Edit karne ke liye neeche table mein pencil icon dabao, ya delete karke naya banao.
+                      {t.oneBot}
                     </div>
                   ) : (
                   <>
                   <div className="space-y-2">
-                    <Label htmlFor="bot-name">Bot Name</Label>
+                    <Label htmlFor="bot-name">{t.botName}</Label>
                     <Input
                       id="bot-name"
-                      placeholder="e.g. Customer Support Bot"
+                      placeholder={t.placeholders.botName}
                       value={botName}
                       onChange={(e) => setBotName(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="bot-prompt">Bot Prompt</Label>
+                    <Label htmlFor="bot-prompt">{t.botPrompt}</Label>
                     <Textarea
                       id="bot-prompt"
                       rows={5}
-                      placeholder="Define how your bot should respond to customers."
+                      placeholder={t.placeholders.botPrompt}
                       value={botPrompt}
                       onChange={(e) => setBotPrompt(e.target.value)}
                     />
                     <div className="flex flex-wrap gap-2 pt-1">
-                      <span className="text-xs text-muted-foreground self-center">Personality:</span>
+                      <span className="text-xs text-muted-foreground self-center">{t.personality}</span>
                       {personalityChips.map((p) => (
                         <button
                           key={p.label}
@@ -898,7 +1130,7 @@ const Agent = () => {
                   </div>
                   <div className="flex gap-2">
                     <Button type="button" onClick={saveBot} disabled={saving}>
-                      {editingBotId ? "Update Bot" : "Create Bot"}
+                      {editingBotId ? t.updateBot : t.createBot}
                     </Button>
                   </div>
                   </>
@@ -907,19 +1139,19 @@ const Agent = () => {
 
                 <div className="mt-6 rounded-xl border border-border overflow-hidden">
                   <div className="grid grid-cols-12 px-4 py-3 text-xs uppercase text-muted-foreground border-b border-border">
-                    <span className="col-span-2">Bot</span>
-                    <span className="col-span-6">Prompt</span>
-                    <span className="col-span-2">Status</span>
-                    <span className="col-span-2 text-right">Actions</span>
+                    <span className="col-span-2">{t.table.bot}</span>
+                    <span className="col-span-6">{t.table.prompt}</span>
+                    <span className="col-span-2">{t.table.status}</span>
+                    <span className="col-span-2 text-right">{t.labels.actions}</span>
                   </div>
                   {botEntries.length === 0 ? (
-                    <p className="p-4 text-sm text-muted-foreground">No bots created yet.</p>
+                    <p className="p-4 text-sm text-muted-foreground">{t.table.noBots}</p>
                   ) : (
                     botEntries.map((bot) => (
                       <div key={bot.id} className="grid grid-cols-12 px-4 py-3 text-sm border-b border-border last:border-b-0">
                         <span className="col-span-2 font-medium">{bot.name}</span>
                         <span className="col-span-6 text-muted-foreground">{bot.prompt}</span>
-                        <span className="col-span-2">{bot.is_active ? "Active" : "Inactive"}</span>
+                        <span className="col-span-2">{bot.is_active ? t.table.active : t.table.inactive}</span>
                         <div className="col-span-2 flex justify-end gap-1">
                           <Button variant="ghost" size="icon" onClick={() => editBot(bot.id)}>
                             <Pencil size={16} />
@@ -935,10 +1167,10 @@ const Agent = () => {
 
                 <div className="flex justify-between mt-8">
                   <Button variant="ghost" onClick={goBack}>
-                    <ArrowLeft size={16} /> Back
+                    <ArrowLeft size={16} /> {t.back}
                   </Button>
                   <Button variant="hero" size="lg" disabled={!canNextFrom2} onClick={() => setStep(3)}>
-                    Activate Agent — Go Live <Rocket size={16} />
+                    {t.finish} <Rocket size={16} />
                   </Button>
                 </div>
               </motion.div>
@@ -953,19 +1185,19 @@ const Agent = () => {
               >
                 <div className="rounded-3xl bg-gradient-to-r from-primary to-accent p-8 text-primary-foreground">
                   <h1 className="text-3xl md:text-4xl font-display font-extrabold mb-2">
-                    {setupComplete ? "Welcome back! Aapka agent live hai 🚀" : "Chalo, agent ready karte hain — 10 min mein live."}
+                    {setupComplete ? t.dashboardReady : t.dashboardTodo}
                   </h1>
                   <p className="text-base md:text-lg text-primary-foreground/90 max-w-3xl">
                     {setupComplete
-                      ? "Business knowledge, WhatsApp aur AI bots — sab ek jagah manage karo."
-                      : `${checklistDone} of 3 done. Bas ek-do step aur baaki hai.`}
+                      ? t.manage
+                      : t.progress(checklistDone)}
                   </p>
                 </div>
 
                 {!setupComplete && (
                   <div className="rounded-2xl border border-border bg-card p-6 space-y-3">
                     <div className="flex items-center justify-between">
-                      <p className="font-semibold">Setup checklist</p>
+                      <p className="font-semibold">{t.checklistTitle}</p>
                       <span className="text-xs text-muted-foreground">{checklistDone}/3</span>
                     </div>
                     <div className="space-y-2">
@@ -993,7 +1225,7 @@ const Agent = () => {
                         if (next) setStep(next.step);
                       }}
                     >
-                      Resume Setup <ArrowRight size={16} />
+                      {t.resume} <ArrowRight size={16} />
                     </Button>
                   </div>
                 )}
@@ -1004,7 +1236,7 @@ const Agent = () => {
                       <Store size={22} />
                     </div>
                     <p className="text-4xl font-bold text-foreground">{infoEntries.length}</p>
-                    <p className="text-muted-foreground mt-2">Business Information</p>
+                    <p className="text-muted-foreground mt-2">{t.stats[0]}</p>
                   </div>
 
                   <div className="rounded-2xl border border-border bg-card p-5">
@@ -1012,7 +1244,7 @@ const Agent = () => {
                       <FileText size={22} />
                     </div>
                     <p className="text-4xl font-bold text-foreground">{fileEntries.length}</p>
-                    <p className="text-muted-foreground mt-2">Business Files</p>
+                    <p className="text-muted-foreground mt-2">{t.stats[1]}</p>
                   </div>
 
                   <div className="rounded-2xl border border-border bg-card p-5">
@@ -1020,7 +1252,7 @@ const Agent = () => {
                       <MessageCircle size={22} />
                     </div>
                     <p className="text-4xl font-bold text-foreground">{whatsappConnected ? 1 : 0}</p>
-                    <p className="text-muted-foreground mt-2">WhatsApp Connections</p>
+                    <p className="text-muted-foreground mt-2">{t.stats[2]}</p>
                   </div>
 
                   <div className="rounded-2xl border border-border bg-card p-5">
@@ -1028,20 +1260,20 @@ const Agent = () => {
                       <Sparkles size={22} />
                     </div>
                     <p className="text-4xl font-bold text-foreground">{botEntries.filter((bot) => bot.is_active).length}</p>
-                    <p className="text-muted-foreground mt-2">Active AI Bots</p>
+                    <p className="text-muted-foreground mt-2">{t.stats[3]}</p>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <h2 className="text-3xl font-display font-bold">Quick Actions</h2>
+                  <h2 className="text-3xl font-display font-bold">{t.quick}</h2>
                   <div className="grid gap-4 md:grid-cols-3">
                     <button
                       type="button"
                       onClick={() => setStep(0)}
                       className="rounded-2xl border border-border bg-card p-5 text-left hover:bg-muted/40 transition-colors"
                     >
-                      <p className="text-lg font-semibold">Add Business Info</p>
-                      <p className="text-sm text-muted-foreground mt-2">Build your knowledge base</p>
+                      <p className="text-lg font-semibold">{t.quickCards[0][0]}</p>
+                      <p className="text-sm text-muted-foreground mt-2">{t.quickCards[0][1]}</p>
                     </button>
 
                     <button
@@ -1049,8 +1281,8 @@ const Agent = () => {
                       onClick={() => setStep(1)}
                       className="rounded-2xl border border-border bg-card p-5 text-left hover:bg-muted/40 transition-colors"
                     >
-                      <p className="text-lg font-semibold">Connect WhatsApp</p>
-                      <p className="text-sm text-muted-foreground mt-2">Enable messaging channel</p>
+                      <p className="text-lg font-semibold">{t.quickCards[1][0]}</p>
+                      <p className="text-sm text-muted-foreground mt-2">{t.quickCards[1][1]}</p>
                     </button>
 
                     <button
@@ -1058,8 +1290,8 @@ const Agent = () => {
                       onClick={() => setStep(2)}
                       className="rounded-2xl border border-border bg-card p-5 text-left hover:bg-muted/40 transition-colors"
                     >
-                      <p className="text-lg font-semibold">Create AI Bot</p>
-                      <p className="text-sm text-muted-foreground mt-2">Configure prompt automation</p>
+                      <p className="text-lg font-semibold">{t.quickCards[2][0]}</p>
+                      <p className="text-sm text-muted-foreground mt-2">{t.quickCards[2][1]}</p>
                     </button>
                   </div>
                 </div>
@@ -1068,8 +1300,8 @@ const Agent = () => {
           </AnimatePresence>
 
           <p className="text-center text-xs text-muted-foreground mt-8">
-            Need help? WhatsApp us at{" "}
-            <a href="https://wa.me/916362094506" className="text-primary hover:underline">support</a>
+            {t.support}{" "}
+            <a href="https://wa.me/916362094506" className="text-primary hover:underline">{t.supportLink}</a>
           </p>
         </main>
       </div>
