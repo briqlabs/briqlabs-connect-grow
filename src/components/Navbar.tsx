@@ -21,7 +21,6 @@ const Navbar = ({ openForm }: { openForm: LeadFormOpener }) => {
 
         <div className="hidden md:flex items-center gap-8">
           <a href="#use-cases" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Use cases</a>
-          <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
           <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQ</a>
           <span className="text-xs px-2 py-0.5 rounded-full bg-accent/15 text-accent">Voice AI · soon</span>
         </div>
@@ -46,7 +45,6 @@ const Navbar = ({ openForm }: { openForm: LeadFormOpener }) => {
           >
             <div className="flex flex-col gap-4 p-6">
               <a href="#use-cases" className="text-sm text-muted-foreground hover:text-foreground">Use cases</a>
-              <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground">Pricing</a>
               <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground">FAQ</a>
               <div className="flex items-center gap-3">
                 <ThemeToggle />

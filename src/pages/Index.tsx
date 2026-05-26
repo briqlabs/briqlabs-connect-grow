@@ -5,7 +5,6 @@ import HeroSectionV2 from "@/components/home/HeroSectionV2";
 import VerticalsSection from "@/components/home/VerticalsSection";
 import HowItWorks from "@/components/home/HowItWorks";
 import FeaturesGrid from "@/components/home/FeaturesGrid";
-import PricingSection from "@/components/home/PricingSection";
 import VoiceAIComingSoon from "@/components/home/VoiceAIComingSoon";
 import TestimonialsSection from "@/components/home/TestimonialsSection";
 import FAQSection from "@/components/home/FAQSection";
@@ -38,7 +37,6 @@ const Index = () => {
       <VerticalsSection active={vertical} onSelect={setVertical} />
       <HowItWorks />
       <FeaturesGrid />
-      <PricingSection openForm={openForm} />
       <VoiceAIComingSoon />
       <TestimonialsSection />
       <FAQSection />

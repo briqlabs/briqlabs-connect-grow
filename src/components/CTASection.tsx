@@ -30,9 +30,6 @@ const CTASection = ({ openForm }: { openForm: LeadFormOpener }) => {
                 Get Started Free
                 <ArrowRight size={18} />
               </Button>
-              <Button variant="hero-outline" size="lg" className="text-base px-8 py-6" onClick={() => openForm("Book a Demo")}>
-                Book a Demo
-              </Button>
             </div>
           </div>
         </motion.div>
