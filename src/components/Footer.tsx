@@ -1,4 +1,27 @@
+import { useLanguage } from "@/hooks/use-language";
+
+const copy = {
+  hinglish: {
+    privacy: "Privacy Policy",
+    terms: "Terms & Conditions",
+    rights: "All rights reserved.",
+  },
+  en: {
+    privacy: "Privacy Policy",
+    terms: "Terms & Conditions",
+    rights: "All rights reserved.",
+  },
+  hi: {
+    privacy: "गोपनीयता नीति",
+    terms: "नियम और शर्तें",
+    rights: "सर्वाधिकार सुरक्षित.",
+  },
+};
+
 const Footer = () => {
+  const { language } = useLanguage();
+  const t = copy[language];
+
   return (
     <footer className="border-t border-border py-12">
       <div className="container mx-auto px-6">
@@ -12,11 +35,11 @@ const Footer = () => {
             </span>
           </div>
           <div className="flex items-center gap-4">
-            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Privacy Policy</a>
-            <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Terms & Conditions</a>
+            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">{t.privacy}</a>
+            <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">{t.terms}</a>
           </div>
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Briqlabs AI. All rights reserved.
+            © {new Date().getFullYear()} Briqlabs AI. {t.rights}
           </p>
         </div>
       </div>

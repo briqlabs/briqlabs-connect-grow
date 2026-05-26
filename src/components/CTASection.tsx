@@ -2,9 +2,30 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { ArrowRight, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "@/hooks/use-language";
+
+const copy = {
+  hinglish: {
+    title: "Ready to Automate Your Business?",
+    body: "Join 500+ businesses already using Briqlabs AI to generate more leads and never miss an appointment.",
+    cta: "Get Started Free",
+  },
+  en: {
+    title: "Ready to Automate Your Business?",
+    body: "Join 500+ businesses already using Briqlabs AI to generate more leads and never miss an appointment.",
+    cta: "Get Started Free",
+  },
+  hi: {
+    title: "क्या आप अपना बिजनेस ऑटोमेट करने के लिए तैयार हैं?",
+    body: "500+ बिजनेस Briqlabs AI से ज्यादा लीड पा रहे हैं और कोई अपॉइंटमेंट मिस नहीं कर रहे हैं.",
+    cta: "फ्री में शुरू करें",
+  },
+};
 
 const CTASection = () => {
   const navigate = useNavigate();
+  const { language } = useLanguage();
+  const t = copy[language];
 
   return (
     <section id="contact" className="py-24 md:py-32 relative">
@@ -22,14 +43,14 @@ const CTASection = () => {
               <Zap size={28} className="text-primary-foreground" />
             </div>
             <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
-              Ready to Automate Your Business?
+              {t.title}
             </h2>
             <p className="text-muted-foreground text-lg mb-8 max-w-lg mx-auto">
-              Join 500+ businesses already using Briqlabs AI to generate more leads and never miss an appointment.
+              {t.body}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button variant="hero" size="lg" className="text-base px-8 py-6" onClick={() => navigate("/agent")}>
-                Get Started Free
+                {t.cta}
                 <ArrowRight size={18} />
               </Button>
             </div>
