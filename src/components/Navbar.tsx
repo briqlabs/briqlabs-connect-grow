@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import type { LeadFormOpener } from "@/pages/Index";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -13,25 +14,42 @@ const copy = {
     faq: "FAQ",
     voiceSoon: "Voice AI · soon",
     cta: "Start free trial",
+    languageHint: "Choose your language",
+    dismissHint: "Dismiss language hint",
   },
   en: {
     useCases: "Use cases",
     faq: "FAQ",
     voiceSoon: "Voice AI · soon",
     cta: "Start free trial",
+    languageHint: "Choose your language",
+    dismissHint: "Dismiss language hint",
   },
   hi: {
     useCases: "उपयोग",
     faq: "सवाल-जवाब",
     voiceSoon: "Voice AI · जल्द",
     cta: "फ्री ट्रायल शुरू करें",
+    languageHint: "अपनी भाषा चुनें",
+    dismissHint: "Language hint बंद करें",
   },
 };
 
 const Navbar = ({ openForm }: { openForm: LeadFormOpener }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [showLanguageHint, setShowLanguageHint] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return window.localStorage.getItem("briqlabs-language-hint-dismissed") !== "true";
+  });
+  const location = useLocation();
   const { language } = useLanguage();
   const t = copy[language];
+  const showHomepageLanguageHint = location.pathname === "/" && showLanguageHint;
+
+  const dismissLanguageHint = () => {
+    setShowLanguageHint(false);
+    window.localStorage.setItem("briqlabs-language-hint-dismissed", "true");
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass">
@@ -51,7 +69,31 @@ const Navbar = ({ openForm }: { openForm: LeadFormOpener }) => {
         </div>
 
         <div className="hidden md:flex items-center gap-2">
-          <LanguageToggle />
+          <div className="relative">
+            <LanguageToggle />
+            <AnimatePresence>
+              {showHomepageLanguageHint && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -4, scale: 0.96 }}
+                  transition={{ duration: 0.18 }}
+                  className="absolute right-0 top-11 w-48 rounded-lg border border-primary/20 bg-popover p-3 text-popover-foreground shadow-xl shadow-primary/10"
+                >
+                  <div className="absolute -top-1.5 right-5 h-3 w-3 rotate-45 border-l border-t border-primary/20 bg-popover" />
+                  <button
+                    type="button"
+                    aria-label={t.dismissHint}
+                    onClick={dismissLanguageHint}
+                    className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X size={13} />
+                  </button>
+                  <p className="pr-5 text-xs font-medium leading-relaxed">{t.languageHint}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
           <ThemeToggle />
           <Button variant="hero" size="sm" onClick={() => openForm("Start Free Trial")}>{t.cta}</Button>
         </div>
