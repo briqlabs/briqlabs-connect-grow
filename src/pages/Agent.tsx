@@ -5,7 +5,7 @@ import {
   Upload, MessageCircle, Power, Check, ArrowRight, ArrowLeft,
   Store, FileText, QrCode, Sparkles, LogOut, LifeBuoy, LayoutDashboard,
   RefreshCw, Smartphone, Loader2, AlertCircle, Trash2, Pencil, Plus,
-  GraduationCap, Home, Stethoscope, Sofa, Rocket,
+  GraduationCap, Home, Stethoscope, Sofa, Rocket, Send, Bot, UserRound,
 } from "lucide-react";
 import { Button }   from "@/components/ui/button";
 import { Input }    from "@/components/ui/input";
@@ -22,6 +22,13 @@ import LanguageToggle from "@/components/LanguageToggle";
 import { useLanguage } from "@/hooks/use-language";
 
 type Step = 0 | 1 | 2 | 3;
+type TestChatMessage = {
+  id: string;
+  role: "user" | "assistant";
+  message: string;
+  retrievalScore?: number;
+  faithfulnessScore?: number;
+};
 
 const agentCopy = {
   hinglish: {
@@ -374,6 +381,10 @@ const Agent = () => {
   const [editingBotId, setEditingBotId] = useState<string | null>(null);
   const [botEntries, setBotEntries] = useState<Array<{ id: string; name: string; prompt: string; is_active: boolean; created_at: string; updated_at: string }>>([]);
   const [vertical, setVertical] = useState<"coaching" | "realestate" | "clinic" | "interior" | null>(null);
+  const [testMessages, setTestMessages] = useState<TestChatMessage[]>([]);
+  const [testQuestion, setTestQuestion] = useState("");
+  const [testingBot, setTestingBot] = useState(false);
+  const [syncingKnowledge, setSyncingKnowledge] = useState(false);
 
   const steps = [
     { ...t.steps[0], icon: Store },
@@ -510,6 +521,25 @@ const Agent = () => {
         .single();
       if (error) throw error;
       if (data) setInfoEntries((prev) => [data, ...prev]);
+      if (data) {
+        try {
+          await invokeIngestKnowledge({
+            documents: [{
+              title: data.name,
+              content: data.description,
+              source_type: "business_profile",
+              source_url: `business-information://${data.id}`,
+              metadata: {
+                source_table: "business_information",
+                business_information_id: data.id,
+                created_at: data.created_at,
+              },
+            }],
+          });
+        } catch (ingestError: any) {
+          toast.warning(`Business information saved, but AI indexing failed: ${ingestError?.message ?? "Unknown error"}`);
+        }
+      }
       setBusinessName("");
       setBusinessInfo("");
       toast.success("Business information added");
@@ -550,9 +580,26 @@ const Agent = () => {
         if (data) uploadedRows.push(data);
       }
 
+      if (uploadedRows.length > 0) {
+        const { data: { session } } = await supabase.auth.getSession();
+        const { error: ingestErr } = await supabase.functions.invoke("ingest-knowledge", {
+          body: {
+            business_id: user.id,
+            file_ids: uploadedRows.map((row) => row.id),
+          },
+          ...(session?.access_token
+            ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+            : {}),
+        });
+        if (ingestErr) {
+          toast.warning(`Files uploaded, but AI indexing failed: ${ingestErr.message}`);
+        } else {
+          toast.success("Files uploaded and indexed for AI");
+        }
+      }
+
       setFileEntries((prev) => [...uploadedRows, ...prev]);
       setPendingFiles([]);
-      toast.success("Files uploaded");
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to upload files");
     } finally {
@@ -561,6 +608,13 @@ const Agent = () => {
   };
 
   const deleteBusinessInformation = async (id: string) => {
+    if (user?.id) {
+      try {
+        await invokeIngestKnowledge({ delete_source_urls: [`business-information://${id}`] });
+      } catch {
+        // Keep deletion usable even if index cleanup fails.
+      }
+    }
     const { error } = await supabase.from("business_information").delete().eq("id", id);
     if (error) {
       toast.error(error.message);
@@ -571,6 +625,22 @@ const Agent = () => {
   };
 
   const deleteBusinessFile = async (id: string, filePath: string) => {
+    if (user?.id) {
+      const { data: { session } } = await supabase.auth.getSession();
+      const { error: ingestErr } = await supabase.functions.invoke("ingest-knowledge", {
+        body: {
+          business_id: user.id,
+          delete_file_paths: [filePath],
+        },
+        ...(session?.access_token
+          ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+          : {}),
+      });
+      if (ingestErr) {
+        toast.warning(`File will be deleted, but AI index cleanup failed: ${ingestErr.message}`);
+      }
+    }
+
     const { error: storageErr } = await supabase.storage.from("business-assets").remove([filePath]);
     if (storageErr) {
       toast.error(storageErr.message);
@@ -687,6 +757,90 @@ const Agent = () => {
       return new Date(value).toLocaleString();
     } catch {
       return value;
+    }
+  };
+
+  const invokeIngestKnowledge = async (body: Record<string, unknown>) => {
+    if (!user?.id) throw new Error("User session not found");
+    const { data: { session } } = await supabase.auth.getSession();
+    const { error } = await supabase.functions.invoke("ingest-knowledge", {
+      body: { business_id: user.id, ...body },
+      ...(session?.access_token
+        ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+        : {}),
+    });
+    if (error) throw error;
+  };
+
+  const syncKnowledge = async () => {
+    setSyncingKnowledge(true);
+    try {
+      await invokeIngestKnowledge({
+        ingest_existing_business_data: true,
+        ingest_existing_files: true,
+      });
+      toast.success("Knowledge synced for AI testing");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to sync knowledge");
+    } finally {
+      setSyncingKnowledge(false);
+    }
+  };
+
+  const sendTestQuestion = async () => {
+    if (!user?.id) {
+      toast.error("User session not found");
+      return;
+    }
+    const question = testQuestion.trim();
+    if (!question) return;
+
+    const userMessage: TestChatMessage = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      message: question,
+    };
+    setTestMessages((prev) => [...prev, userMessage]);
+    setTestQuestion("");
+    setTestingBot(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke("query-rag", {
+        body: {
+          business_id: user.id,
+          customer_phone: "0000000000",
+          message: question,
+          send_whatsapp: false,
+          match_count: 5,
+        },
+        ...(session?.access_token
+          ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+          : {}),
+      });
+      if (error) throw error;
+
+      setTestMessages((prev) => [
+        ...prev,
+        {
+          id: `assistant-${Date.now()}`,
+          role: "assistant",
+          message: String((data as any)?.answer ?? "I could not find that information."),
+          retrievalScore: Number((data as any)?.retrieval_score ?? 0),
+          faithfulnessScore: Number((data as any)?.faithfulness_score ?? 0),
+        },
+      ]);
+    } catch (e: any) {
+      setTestMessages((prev) => [
+        ...prev,
+        {
+          id: `assistant-error-${Date.now()}`,
+          role: "assistant",
+          message: e?.message ?? "Failed to test AI bot response.",
+        },
+      ]);
+    } finally {
+      setTestingBot(false);
     }
   };
 
@@ -1137,8 +1291,8 @@ const Agent = () => {
                   )}
                 </div>
 
-                <div className="mt-6 rounded-xl border border-border overflow-hidden">
-                  <div className="grid grid-cols-12 px-4 py-3 text-xs uppercase text-muted-foreground border-b border-border">
+	                <div className="mt-6 rounded-xl border border-border overflow-hidden">
+	                  <div className="grid grid-cols-12 px-4 py-3 text-xs uppercase text-muted-foreground border-b border-border">
                     <span className="col-span-2">{t.table.bot}</span>
                     <span className="col-span-6">{t.table.prompt}</span>
                     <span className="col-span-2">{t.table.status}</span>
@@ -1162,10 +1316,105 @@ const Agent = () => {
                         </div>
                       </div>
                     ))
-                  )}
-                </div>
+	                  )}
+	                </div>
 
-                <div className="flex justify-between mt-8">
+	                <div className="mt-6 rounded-xl border border-border bg-background/70 overflow-hidden">
+	                  <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between">
+	                    <div className="flex items-center gap-3">
+	                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+	                        <Bot size={20} />
+	                      </div>
+	                      <div>
+	                        <p className="font-semibold">Test chat</p>
+	                        <p className="text-xs text-muted-foreground">Business info and uploaded files</p>
+	                      </div>
+	                    </div>
+	                    <Button type="button" variant="outline" size="sm" onClick={syncKnowledge} disabled={syncingKnowledge || testingBot}>
+	                      {syncingKnowledge ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />}
+	                      Sync knowledge
+	                    </Button>
+	                  </div>
+
+	                  <div className="h-[360px] overflow-y-auto bg-muted/20 p-4">
+	                    {testMessages.length === 0 ? (
+	                      <div className="flex h-full flex-col items-center justify-center text-center">
+	                        <MessageCircle className="mb-3 text-muted-foreground" size={30} />
+	                        <p className="text-sm font-medium">Ask a customer-style question</p>
+	                        <p className="mt-1 max-w-xs text-xs text-muted-foreground">Try pricing, timings, services, addresses, or details from uploaded files.</p>
+	                      </div>
+	                    ) : (
+	                      <div className="space-y-3">
+	                        {testMessages.map((message) => (
+	                          <div
+	                            key={message.id}
+	                            className={`flex gap-2 ${message.role === "user" ? "justify-end" : "justify-start"}`}
+	                          >
+	                            {message.role === "assistant" && (
+	                              <div className="mt-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+	                                <Bot size={15} />
+	                              </div>
+	                            )}
+	                            <div className={`max-w-[82%] rounded-xl px-3 py-2 text-sm ${
+	                              message.role === "user"
+	                                ? "bg-primary text-primary-foreground"
+	                                : "border border-border bg-background"
+	                            }`}>
+	                              <p className="whitespace-pre-wrap break-words">{message.message}</p>
+	                              {message.role === "assistant" && typeof message.retrievalScore === "number" && (
+	                                <div className="mt-2 flex flex-wrap gap-1.5 text-[10px] text-muted-foreground">
+	                                  <span className="rounded-full bg-muted px-2 py-0.5">Retrieval {Math.round(message.retrievalScore * 100)}%</span>
+	                                  <span className="rounded-full bg-muted px-2 py-0.5">Faithfulness {Math.round((message.faithfulnessScore ?? 0) * 100)}%</span>
+	                                </div>
+	                              )}
+	                            </div>
+	                            {message.role === "user" && (
+	                              <div className="mt-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+	                                <UserRound size={15} />
+	                              </div>
+	                            )}
+	                          </div>
+	                        ))}
+	                        {testingBot && (
+	                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+	                            <Loader2 size={15} className="animate-spin" />
+	                            Testing response
+	                          </div>
+	                        )}
+	                      </div>
+	                    )}
+	                  </div>
+
+	                  <div className="border-t border-border p-3">
+	                    <div className="flex gap-2">
+	                      <Textarea
+	                        rows={2}
+	                        value={testQuestion}
+	                        onChange={(e) => setTestQuestion(e.target.value)}
+	                        placeholder="Ask what a customer would ask..."
+	                        className="min-h-[48px] resize-none"
+	                        onKeyDown={(e) => {
+	                          if (e.key === "Enter" && !e.shiftKey) {
+	                            e.preventDefault();
+	                            void sendTestQuestion();
+	                          }
+	                        }}
+	                      />
+	                      <Button
+	                        type="button"
+	                        size="icon"
+	                        className="h-12 w-12 flex-shrink-0"
+	                        onClick={() => void sendTestQuestion()}
+	                        disabled={testingBot || !testQuestion.trim()}
+	                        aria-label="Send test message"
+	                      >
+	                        {testingBot ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+	                      </Button>
+	                    </div>
+	                  </div>
+	                </div>
+
+	                <div className="flex justify-between mt-8">
                   <Button variant="ghost" onClick={goBack}>
                     <ArrowLeft size={16} /> {t.back}
                   </Button>

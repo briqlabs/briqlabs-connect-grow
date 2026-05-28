@@ -1,17 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const EVOLUTION_URL = Deno.env.get("EVOLUTION_API_URL")!;
-const EVOLUTION_KEY = Deno.env.get("EVOLUTION_API_KEY")!;
-const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY")!;
-const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-1.5-flash";
+import { corsHeaders, jsonResponse, requireEnv } from "../shared/http.ts";
+import { processRagQuery } from "../shared/rag-pipeline.ts";
 
 type ExtractedMessage = {
   event: string | null;
@@ -110,134 +99,17 @@ function extractEvolutionMessage(payload: unknown): ExtractedMessage {
   };
 }
 
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-}
-
-function evolutionHeaders() {
-  return {
-    "Content-Type": "application/json",
-    apikey: EVOLUTION_KEY,
-  };
-}
-
-async function callGemini(prompt: string): Promise<string> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
-  const resp = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: prompt }],
-        },
-      ],
-    }),
-  });
-
-  if (!resp.ok) {
-    const text = await resp.text();
-    throw new Error(`Gemini error ${resp.status}: ${text}`);
-  }
-
-  const data = await resp.json();
-  const answer = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!answer || typeof answer !== "string") {
-    throw new Error("Gemini returned empty response");
-  }
-  return answer.trim();
-}
-
-async function sendEvolutionReply(instance: string, phone: string, text: string) {
-  const cleanPhone = phone.replace(/\D/g, "");
-  const body = {
-    number: cleanPhone,
-    text,
-    options: { delay: 500 },
-  };
-
-  const endpointVariants = [
-    `${EVOLUTION_URL}/message/sendText/${instance}`,
-    `${EVOLUTION_URL}/message/sendText`,
-  ];
-
-  let lastError: string | null = null;
-
-  for (const endpoint of endpointVariants) {
-    const payload = endpoint.endsWith("/sendText")
-      ? { ...body, instanceName: instance }
-      : body;
-
-    const resp = await fetch(endpoint, {
-      method: "POST",
-      headers: evolutionHeaders(),
-      body: JSON.stringify(payload),
-    });
-
-    if (resp.ok) return;
-    lastError = `Evolution send failed ${resp.status}: ${await resp.text()}`;
-  }
-
-  throw new Error(lastError ?? "Evolution send failed");
-}
-
-async function buildPromptForUser(admin: ReturnType<typeof createClient>, userId: string, incomingMessage: string) {
-  const [{ data: infos }, { data: files }, { data: bots }] = await Promise.all([
-    admin.from("business_information").select("name,description").eq("user_id", userId).order("created_at", { ascending: true }),
-    admin.from("business_files").select("file_name").eq("user_id", userId).order("created_at", { ascending: true }),
-    admin.from("ai_bots").select("name,prompt,is_active").eq("user_id", userId).order("updated_at", { ascending: false }),
-  ]);
-
-  const activeBot = (bots ?? []).find((b) => b.is_active) ?? (bots ?? [])[0] ?? null;
-  const botInstruction = activeBot?.prompt ?? "You are a helpful business assistant. Respond politely and clearly.";
-
-  const infoText = (infos ?? [])
-    .map((item) => `- ${item.name}: ${item.description}`)
-    .join("\n");
-
-  const fileText = (files ?? []).map((f) => `- ${f.file_name}`).join("\n");
-
-  return [
-    "You are replying to a WhatsApp customer on behalf of a business.",
-    "Follow bot instruction strictly and keep responses concise, polite, and actionable.",
-    "If answer is not present in business context, say you will connect them with support.",
-    "",
-    `Bot Name: ${activeBot?.name ?? "Default Bot"}`,
-    `Bot Instruction: ${botInstruction}`,
-    "",
-    "Business Information:",
-    infoText || "- No business information provided.",
-    "",
-    "Business Files (names only):",
-    fileText || "- No files uploaded.",
-    "",
-    `Customer Message: ${incomingMessage}`,
-    "",
-    "Return only the final WhatsApp reply text.",
-  ].join("\n");
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
+  if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405);
 
   try {
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-      return json({ error: "Missing Supabase environment variables" }, 500);
-    }
-
     const payload = await req.json().catch(() => null);
-    if (!payload || typeof payload !== "object") return json({ error: "Invalid JSON payload" }, 400);
+    if (!payload || typeof payload !== "object") return jsonResponse({ error: "Invalid JSON payload" }, 400);
 
+    const admin = createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"));
     const extracted = extractEvolutionMessage(payload);
 
-    const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-
-    // Save raw webhook event for observability
     await admin.from("whatsapp_webhook_messages").insert({
       event: extracted.event,
       instance: extracted.instance,
@@ -250,9 +122,8 @@ Deno.serve(async (req) => {
       payload,
     });
 
-    // Ignore non-customer/empty messages
     if (extracted.from_me || !extracted.message || !extracted.instance || !extracted.phone_number) {
-      return json({ ok: true, skipped: true, reason: "non-actionable webhook", extracted });
+      return jsonResponse({ ok: true, skipped: true, reason: "non-actionable webhook", extracted });
     }
 
     const { data: instanceRow, error: instanceErr } = await admin
@@ -263,30 +134,36 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (instanceErr || !instanceRow?.user_id) {
-      return json({ ok: true, skipped: true, reason: "instance not mapped to user", extracted, error: instanceErr?.message ?? null });
+      return jsonResponse({
+        ok: true,
+        skipped: true,
+        reason: "instance not mapped to user",
+        extracted,
+        error: instanceErr?.message ?? null,
+      });
     }
 
-    if (!EVOLUTION_URL || !EVOLUTION_KEY) {
-      return json({ error: "Missing EVOLUTION_API_URL or EVOLUTION_API_KEY" }, 500);
-    }
+    const result = await processRagQuery(admin, {
+      business_id: instanceRow.user_id,
+      customer_phone: extracted.phone_number,
+      message: extracted.message,
+      whatsapp_instance: extracted.instance,
+      send_whatsapp: true,
+      match_count: 5,
+    });
 
-    if (!GEMINI_API_KEY) {
-      return json({ error: "Missing GEMINI_API_KEY" }, 500);
-    }
-
-    const prompt = await buildPromptForUser(admin, instanceRow.user_id, extracted.message);
-    const aiReply = await callGemini(prompt);
-
-    await sendEvolutionReply(extracted.instance, extracted.phone_number, aiReply);
-
-    return json({
+    return jsonResponse({
       ok: true,
       processed: true,
       extracted,
       user_id: instanceRow.user_id,
-      reply_preview: aiReply.slice(0, 280),
+      reply_preview: result.answer.slice(0, 280),
+      retrieval_score: result.retrieval_score,
+      faithfulness_score: result.faithfulness_score,
+      latency_ms: result.latency_ms,
     });
-  } catch (e) {
-    return json({ error: (e as Error).message ?? "Unexpected error" }, 500);
+  } catch (error) {
+    console.error("whatsapp-webhook failed", { error: (error as Error).message });
+    return jsonResponse({ error: (error as Error).message }, 500);
   }
 });
