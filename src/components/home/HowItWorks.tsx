@@ -1,16 +1,16 @@
 import { motion } from "framer-motion";
-import { Link2, Brain, Smile } from "lucide-react";
+import { Brain, MessageCircle, Smile } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 
-const icons = [Link2, Brain, Smile];
+const icons = [Brain, MessageCircle, Smile];
 
 const copy = {
   hinglish: {
     eyebrow: "3 Steps · 10 Minutes",
     title: "Setup itna easy hai",
     steps: [
-      { title: "Connect karo", desc: "Apna WhatsApp Business number 5 min mein link karo. QR scan — bas." },
-      { title: "Train karo", desc: "Website link, PDF, ya FAQs daalo. Agent aapke business ko seekh leta hai." },
+      { title: "Train aur test karo", desc: "Business info, PDFs, ya FAQs daalo. AI bot banao aur live jaane se pehle test chat mein check karo." },
+      { title: "WhatsApp connect karo", desc: "Bot ready ho jaaye, phir WhatsApp Business number QR scan se link karo." },
       { title: "Relax", desc: "24×7 agent chats handle karta hai. Aap sirf qualified leads dekho." },
     ],
   },
@@ -18,8 +18,8 @@ const copy = {
     eyebrow: "3 Steps · 10 Minutes",
     title: "Setup is that easy",
     steps: [
-      { title: "Connect", desc: "Link your WhatsApp Business number in 5 minutes. Just scan the QR." },
-      { title: "Train", desc: "Add your website, PDFs, or FAQs. The agent learns your business." },
+      { title: "Train and test", desc: "Add business info, PDFs, or FAQs. Create the AI bot and test it before going live." },
+      { title: "Connect WhatsApp", desc: "Once the bot is ready, link your WhatsApp Business number with a QR scan." },
       { title: "Relax", desc: "The 24/7 agent handles chats while you focus on qualified leads." },
     ],
   },
@@ -27,8 +27,8 @@ const copy = {
     eyebrow: "3 स्टेप · 10 मिनट",
     title: "सेटअप इतना आसान है",
     steps: [
-      { title: "कनेक्ट करें", desc: "अपना WhatsApp Business नंबर 5 मिनट में लिंक करें. बस QR scan करें." },
-      { title: "ट्रेन करें", desc: "Website, PDF या FAQs डालें. Agent आपका business सीख लेता है." },
+      { title: "Train और test करें", desc: "Business info, PDFs या FAQs डालें. AI bot बनाकर live जाने से पहले test chat में check करें." },
+      { title: "WhatsApp connect करें", desc: "Bot ready होने के बाद QR scan से WhatsApp Business number link करें." },
       { title: "आराम करें", desc: "24×7 agent chats handle करता है. आप qualified leads पर focus करें." },
     ],
   },
