@@ -182,4 +182,4 @@ The assistant only answers from retrieved business context. If no chunks pass th
 I could not find that information. Please contact the business directly.
 ```
 
-Every response writes an `ai_eval_logs` row with retrieved chunks, generated answer, retrieval score, faithfulness score, and latency.
+Every response writes an `ai_eval_logs` row with retrieved chunks, generated answer, retrieval score, faithfulness score, and latency. If `LANGSMITH_API_KEY` is configured for the Edge Functions, each chatbot response is also traced to the `LANGSMITH_PROJECT` project with feedback scores for retrieval, faithfulness, and latency.

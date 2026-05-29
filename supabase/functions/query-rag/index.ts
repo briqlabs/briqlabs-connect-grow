@@ -23,7 +23,17 @@ Deno.serve(async (req) => {
 
     return jsonResponse({ ok: true, ...result });
   } catch (error) {
-    console.error("query-rag failed", { error: (error as Error).message });
-    return jsonResponse({ error: (error as Error).message }, 500);
+    const errorMsg = (error as Error).message;
+    console.error("query-rag failed", { error: errorMsg, stack: (error as Error).stack });
+    
+    // Return more specific error messages based on the failure
+    if (errorMsg.includes("NVIDIA") || errorMsg.includes("Gemini")) {
+      return jsonResponse({ error: `AI service unavailable: ${errorMsg}` }, 503);
+    }
+    if (errorMsg.includes("Unauthorized") || errorMsg.includes("Missing")) {
+      return jsonResponse({ error: errorMsg }, 401);
+    }
+    
+    return jsonResponse({ error: errorMsg }, 500);
   }
 });

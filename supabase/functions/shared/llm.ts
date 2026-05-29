@@ -17,7 +17,10 @@ type ChatContentPart = {
 type NvidiaChoice = {
   text?: string;
   message?: {
-    content?: string | ChatContentPart[];
+    role?: string;
+    content?: string | ChatContentPart[] | null;
+    reasoning?: string;
+    refusal?: string | null;
   };
 };
 
@@ -39,17 +42,24 @@ type GeminiGenerateResponse = {
 
 function nvidiaApiKey() {
   const value = Deno.env.get("NVIDIA_API_KEY") ?? Deno.env.get("NVIDIA_NIM_API_KEY");
-  if (!value) throw new Error("Missing required environment variable: NVIDIA_API_KEY");
+  if (!value) {
+    console.error("Missing NVIDIA API key - checked NVIDIA_API_KEY and NVIDIA_NIM_API_KEY");
+    throw new Error("Missing required environment variable: NVIDIA_API_KEY or NVIDIA_NIM_API_KEY");
+  }
   return value;
 }
 
 function nvidiaChatUrl() {
   const baseUrl = Deno.env.get("NVIDIA_BASE_URL") ?? DEFAULT_NVIDIA_BASE_URL;
-  return `${baseUrl.replace(/\/+$/, "")}/chat/completions`;
+  const url = `${baseUrl.replace(/\/+$/, "")}/chat/completions`;
+  console.log("NVIDIA chat endpoint", { url });
+  return url;
 }
 
 function nvidiaModel() {
-  return Deno.env.get("NVIDIA_CHAT_MODEL") ?? Deno.env.get("NVIDIA_MODEL") ?? DEFAULT_NVIDIA_MODEL;
+  const model = Deno.env.get("NVIDIA_CHAT_MODEL") ?? Deno.env.get("NVIDIA_MODEL") ?? DEFAULT_NVIDIA_MODEL;
+  console.log("NVIDIA model", { model });
+  return model;
 }
 
 function geminiExtractionUrl(model: string) {
@@ -74,14 +84,28 @@ async function withRetry<T>(operation: () => Promise<T>, label: string, attempts
 }
 
 function extractTextContent(choice: NvidiaChoice) {
-  const messageContent = choice.message?.content;
-  if (typeof messageContent === "string") return messageContent.trim();
+  const message = choice.message;
+  if (!message) return "";
+  
+  // First try to get content (normal response)
+  const messageContent = message.content;
+  if (typeof messageContent === "string" && messageContent) {
+    return messageContent.trim();
+  }
   if (Array.isArray(messageContent)) {
-    return messageContent
+    const text = messageContent
       .map((part) => part.text ?? "")
       .join("")
       .trim();
+    if (text) return text;
   }
+  
+  // If content is null/empty but reasoning exists, use that
+  if (!messageContent && message.reasoning) {
+    return message.reasoning.trim();
+  }
+  
+  // Fallback to text field if available
   return choice.text?.trim() ?? "";
 }
 
@@ -89,15 +113,25 @@ async function generateNvidiaChat(
   messages: ChatMessage[],
   options: { temperature?: number; maxOutputTokens?: number } = {},
 ) {
+  const model = nvidiaModel();
+  const apiUrl = nvidiaChatUrl();
+  
+  console.log("NVIDIA request", {
+    url: apiUrl,
+    model,
+    messagesCount: messages.length,
+    firstMessage: messages[0],
+  });
+
   const data = await withRetry(async () => {
-    const resp = await fetch(nvidiaChatUrl(), {
+    const resp = await fetch(apiUrl, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${nvidiaApiKey()}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: nvidiaModel(),
+        model,
         messages,
         temperature: options.temperature ?? 0.2,
         max_tokens: options.maxOutputTokens ?? 512,
@@ -106,13 +140,25 @@ async function generateNvidiaChat(
     });
 
     if (!resp.ok) {
-      throw new Error(`NVIDIA generation error ${resp.status}: ${await resp.text()}`);
+      const text = await resp.text();
+      console.error("NVIDIA API non-OK response", { status: resp.status, body: text.slice(0, 500) });
+      throw new Error(`NVIDIA API error ${resp.status}: ${text.slice(0, 200)}`);
     }
     return await resp.json() as NvidiaChatResponse;
   }, "NVIDIA generation");
 
+  console.log("NVIDIA response received", { 
+    choicesLength: data.choices?.length,
+    firstChoice: JSON.stringify(data.choices?.[0])?.slice(0, 500),
+  });
+
   const answer = data.choices?.map(extractTextContent).find(Boolean);
-  if (!answer) throw new Error("NVIDIA returned an empty response");
+  if (!answer) {
+    console.error("No answer extracted from NVIDIA response", {
+      fullResponse: JSON.stringify(data).slice(0, 500),
+    });
+    throw new Error(`NVIDIA returned an empty response. Choices: ${data.choices?.length ?? 0}`);
+  }
   return answer;
 }
 
@@ -156,12 +202,28 @@ export async function generateTextFromParts(parts: ContentPart[], options: { tem
 }
 
 export async function generateJson<T>(prompt: string, fallback: T): Promise<T> {
-  const raw = await generateText(prompt, { temperature: 0, maxOutputTokens: 256 });
-  const jsonText = raw.match(/\{[\s\S]*\}/)?.[0] ?? raw;
   try {
-    return JSON.parse(jsonText) as T;
+    console.log("Generating JSON with prompt length", { length: prompt.length });
+    const raw = await generateText(prompt, { temperature: 0, maxOutputTokens: 256 });
+    console.log("Raw JSON generation response", { 
+      responseLength: raw.length, 
+      firstChars: raw.slice(0, 100),
+    });
+    const jsonText = raw.match(/\{[\s\S]*\}/)?.[0] ?? raw;
+    console.log("Extracted JSON text", {
+      extractedLength: jsonText.length,
+      hasOpenBrace: jsonText.includes("{"),
+      hasCloseBrace: jsonText.includes("}"),
+    });
+    const parsed = JSON.parse(jsonText) as T;
+    console.log("Successfully parsed JSON response");
+    return parsed;
   } catch (error) {
-    console.warn("Failed to parse NVIDIA JSON response", { raw, error: (error as Error).message });
+    console.warn("Failed to parse NVIDIA JSON response", { 
+      error: (error as Error).message,
+      fallbackUsed: true,
+      fallbackValue: JSON.stringify(fallback),
+    });
     return fallback;
   }
 }
