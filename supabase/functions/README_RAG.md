@@ -3,7 +3,7 @@
 This implementation adds a production-ready RAG pipeline for WhatsApp automation:
 
 - `ingest-knowledge`: stores source documents, chunks text, generates Gemini embeddings, and writes pgvector rows.
-- `query-rag`: stores customer messages, retrieves business context with hybrid search, generates grounded Gemini replies, logs evaluation, and can send WhatsApp replies.
+- `query-rag`: stores customer messages, retrieves business context with hybrid search, generates grounded NVIDIA NIM replies, logs evaluation, and can send WhatsApp replies.
 - `whatsapp-webhook`: receives Evolution API webhooks and now routes actionable customer messages through the same RAG pipeline.
 
 ## Environment
@@ -11,8 +11,11 @@ This implementation adds a production-ready RAG pipeline for WhatsApp automation
 Set Supabase Edge Function secrets:
 
 ```bash
+supabase secrets set NVIDIA_API_KEY=...
+supabase secrets set NVIDIA_CHAT_MODEL=nvidia/llama-3.3-nemotron-super-49b-v1.5
+supabase secrets set NVIDIA_BASE_URL=https://integrate.api.nvidia.com/v1
 supabase secrets set GEMINI_API_KEY=...
-supabase secrets set GEMINI_MODEL=gemini-2.5-flash
+supabase secrets set GEMINI_EXTRACTION_MODEL=gemini-1.5-flash
 supabase secrets set GEMINI_EMBEDDING_MODEL=gemini-embedding-001
 supabase secrets set EVOLUTION_API_URL=https://your-evolution-api.example.com
 supabase secrets set EVOLUTION_API_KEY=...
@@ -23,6 +26,8 @@ supabase secrets set RAG_ADMIN_SECRET=optional-server-to-server-secret
 ```
 
 Supabase injects `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` into Edge Functions in hosted projects. For local serving, copy `.env.example` to `supabase/functions/.env` and fill it.
+
+`NVIDIA_CHAT_MODEL` can be changed to any chat model available through NVIDIA NIM's OpenAI-compatible `/v1/chat/completions` endpoint. `NVIDIA_BASE_URL` defaults to `https://integrate.api.nvidia.com/v1` and only needs to be set if you use a custom/self-hosted NIM endpoint.
 
 ## Deploy
 
