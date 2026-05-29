@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Upload, MessageCircle, Power, Check, ArrowRight, ArrowLeft,
+  Upload, MessageCircle, Check, ArrowRight, ArrowLeft,
   Store, FileText, QrCode, Sparkles, LogOut, LifeBuoy, LayoutDashboard,
   RefreshCw, Smartphone, Loader2, AlertCircle, Trash2, Pencil, Plus,
   GraduationCap, Home, Stethoscope, Sofa, Rocket, Send, Bot, UserRound,
@@ -43,10 +43,10 @@ const agentCopy = {
     scanSteps: ["Open WhatsApp on your phone", "Go to Settings → Linked Devices → Link a Device", "Point your camera at the QR code above"],
     steps: [
       { label: "Business", sub: "Details bharo" },
-      { label: "WhatsApp", sub: "QR scan karo" },
-      { label: "AI Chalu Karo", sub: "Go live" },
+      { label: "AI Bot", sub: "Test karo" },
+      { label: "WhatsApp", sub: "Go live" },
     ],
-    nav: ["Dashboard", "Business Details", "Whatsapp Integration", "AI bot"],
+    nav: ["Dashboard", "Business Details", "AI bot", "Whatsapp Integration"],
     help: "Help",
     signOut: "Sign out",
     theme: "Theme",
@@ -67,14 +67,14 @@ const agentCopy = {
     noFiles: "No files uploaded yet.",
     next: "Next",
     back: "Back",
-    step1Title: "WhatsApp connect karo",
-    step1Desc: "QR scan karo apne WhatsApp se — 30 second ka kaam hai.",
+    step1Title: "AI bot setup karo",
+    step1Desc: "Template choose karo ya apna prompt likho. Test chat se bot ko WhatsApp live karne se pehle check karo.",
     personal: "Personal number",
     personalDesc: "Apna personal WhatsApp use kar sakte ho — alag SIM ki zaroorat nahi.",
     businessNumber: "Business number",
     businessNumberDesc: "WhatsApp Business app ka number bhi link kar sakte ho. Recommended for SMB.",
-    step2Title: "AI bot setup karo",
-    step2Desc: "Template choose karo ya apna prompt likho. Hinglish wala SMBs ke liye sabse popular hai.",
+    step2Title: "WhatsApp connect karo",
+    step2Desc: "AI bot test karne ke baad QR scan karo aur WhatsApp pe live deploy karo.",
     templatesTitle: "Templates se shuru karo",
     templatesDesc: "Click karke prefill ho jayega — phir edit kar sakte ho.",
     aiAssistant: "AI Assistant",
@@ -90,7 +90,7 @@ const agentCopy = {
     personality: "Personality:",
     updateBot: "Update Bot",
     table: { bot: "Bot", prompt: "Prompt", status: "Status", active: "Active", inactive: "Inactive", noBots: "No bots created yet." },
-    finish: "Activate Agent — Go Live",
+    finish: "Deploy to WhatsApp Live",
     dashboardReady: "Welcome back! Aapka agent live hai",
     dashboardTodo: "Chalo, agent ready karte hain — 10 min mein live.",
     manage: "Business knowledge, WhatsApp aur AI bots — sab ek jagah manage karo.",
@@ -99,8 +99,8 @@ const agentCopy = {
     resume: "Resume Setup",
     stats: ["Business Information", "Business Files", "WhatsApp Connections", "Active AI Bots"],
     quick: "Quick Actions",
-    quickCards: [["Add Business Info", "Build your knowledge base"], ["Connect WhatsApp", "Enable messaging channel"], ["Create AI Bot", "Configure prompt automation"]],
-    checklist: ["Business info added", "WhatsApp connected", "AI bot active"],
+    quickCards: [["Add Business Info", "Build your knowledge base"], ["Create AI Bot", "Configure and test prompt automation"], ["Connect WhatsApp", "Deploy messaging channel live"]],
+    checklist: ["Business info added", "AI bot active", "WhatsApp connected"],
     support: "Need help? WhatsApp us at",
     supportLink: "support",
   },
@@ -116,10 +116,10 @@ const agentCopy = {
     scanSteps: ["Open WhatsApp on your phone", "Go to Settings → Linked Devices → Link a Device", "Point your camera at the QR code above"],
     steps: [
       { label: "Business", sub: "Add details" },
-      { label: "WhatsApp", sub: "Scan QR" },
-      { label: "Turn On AI", sub: "Go live" },
+      { label: "AI Bot", sub: "Create and test" },
+      { label: "WhatsApp", sub: "Go live" },
     ],
-    nav: ["Dashboard", "Business Details", "WhatsApp Integration", "AI bot"],
+    nav: ["Dashboard", "Business Details", "AI bot", "WhatsApp Integration"],
     help: "Help",
     signOut: "Sign out",
     theme: "Theme",
@@ -140,14 +140,14 @@ const agentCopy = {
     noFiles: "No files uploaded yet.",
     next: "Next",
     back: "Back",
-    step1Title: "Connect your WhatsApp",
-    step1Desc: "Scan the QR with WhatsApp. It takes about 30 seconds.",
+    step1Title: "Set up your AI bot",
+    step1Desc: "Choose a template or write your own prompt. Test the bot before deploying it to live WhatsApp.",
     personal: "Personal number",
     personalDesc: "You can use your personal WhatsApp number. No separate SIM is required.",
     businessNumber: "Business number",
     businessNumberDesc: "You can also link a WhatsApp Business app number. Recommended for SMBs.",
-    step2Title: "Set up your AI bot",
-    step2Desc: "Choose a template or write your own prompt. Hinglish is most popular for SMBs.",
+    step2Title: "Connect your WhatsApp",
+    step2Desc: "After your AI bot is created and tested, scan the QR to deploy it live on WhatsApp.",
     templatesTitle: "Start with a template",
     templatesDesc: "Click to prefill the form, then edit it as needed.",
     aiAssistant: "AI Assistant",
@@ -163,7 +163,7 @@ const agentCopy = {
     personality: "Personality:",
     updateBot: "Update Bot",
     table: { bot: "Bot", prompt: "Prompt", status: "Status", active: "Active", inactive: "Inactive", noBots: "No bots created yet." },
-    finish: "Activate Agent — Go Live",
+    finish: "Deploy to WhatsApp Live",
     dashboardReady: "Welcome back! Your agent is live",
     dashboardTodo: "Let’s get your agent ready — live in 10 minutes.",
     manage: "Manage business knowledge, WhatsApp, and AI bots from one place.",
@@ -172,8 +172,8 @@ const agentCopy = {
     resume: "Resume Setup",
     stats: ["Business Information", "Business Files", "WhatsApp Connections", "Active AI Bots"],
     quick: "Quick Actions",
-    quickCards: [["Add Business Info", "Build your knowledge base"], ["Connect WhatsApp", "Enable messaging channel"], ["Create AI Bot", "Configure prompt automation"]],
-    checklist: ["Business info added", "WhatsApp connected", "AI bot active"],
+    quickCards: [["Add Business Info", "Build your knowledge base"], ["Create AI Bot", "Configure and test prompt automation"], ["Connect WhatsApp", "Deploy messaging channel live"]],
+    checklist: ["Business info added", "AI bot active", "WhatsApp connected"],
     support: "Need help? WhatsApp us at",
     supportLink: "support",
   },
@@ -189,10 +189,10 @@ const agentCopy = {
     scanSteps: ["Phone में WhatsApp खोलें", "Settings → Linked Devices → Link a Device पर जाएँ", "Camera को ऊपर दिए QR code पर point करें"],
     steps: [
       { label: "Business", sub: "Details भरें" },
-      { label: "WhatsApp", sub: "QR scan करें" },
-      { label: "AI चालू करें", sub: "Go live" },
+      { label: "AI Bot", sub: "Test करें" },
+      { label: "WhatsApp", sub: "Go live" },
     ],
-    nav: ["Dashboard", "Business Details", "WhatsApp Integration", "AI bot"],
+    nav: ["Dashboard", "Business Details", "AI bot", "WhatsApp Integration"],
     help: "Help",
     signOut: "Sign out",
     theme: "Theme",
@@ -213,14 +213,14 @@ const agentCopy = {
     noFiles: "अभी कोई files upload नहीं हुई.",
     next: "Next",
     back: "Back",
-    step1Title: "WhatsApp connect करें",
-    step1Desc: "अपने WhatsApp से QR scan करें — 30 seconds का काम है.",
+    step1Title: "AI bot setup करें",
+    step1Desc: "Template चुनें या अपना prompt लिखें. WhatsApp live करने से पहले test chat से bot check करें.",
     personal: "Personal number",
     personalDesc: "आप personal WhatsApp use कर सकते हैं — अलग SIM की जरूरत नहीं.",
     businessNumber: "Business number",
     businessNumberDesc: "WhatsApp Business app का number भी link कर सकते हैं. SMBs के लिए recommended.",
-    step2Title: "AI bot setup करें",
-    step2Desc: "Template चुनें या अपना prompt लिखें. SMBs के लिए Hinglish सबसे popular है.",
+    step2Title: "WhatsApp connect करें",
+    step2Desc: "AI bot create और test करने के बाद QR scan करके उसे WhatsApp पर live deploy करें.",
     templatesTitle: "Template से शुरू करें",
     templatesDesc: "Click करने पर prefill होगा — फिर edit कर सकते हैं.",
     aiAssistant: "AI Assistant",
@@ -236,7 +236,7 @@ const agentCopy = {
     personality: "Personality:",
     updateBot: "Bot Update करें",
     table: { bot: "Bot", prompt: "Prompt", status: "Status", active: "Active", inactive: "Inactive", noBots: "अभी कोई bot नहीं बना." },
-    finish: "Agent Activate करें — Go Live",
+    finish: "WhatsApp पर Live Deploy करें",
     dashboardReady: "Welcome back! आपका agent live है",
     dashboardTodo: "चलिए, agent ready करते हैं — 10 min में live.",
     manage: "Business knowledge, WhatsApp और AI bots — सब एक जगह manage करें.",
@@ -245,14 +245,14 @@ const agentCopy = {
     resume: "Setup Resume करें",
     stats: ["Business Information", "Business Files", "WhatsApp Connections", "Active AI Bots"],
     quick: "Quick Actions",
-    quickCards: [["Business Info जोड़ें", "Knowledge base बनाएं"], ["WhatsApp connect करें", "Messaging channel enable करें"], ["AI Bot बनाएं", "Prompt automation configure करें"]],
-    checklist: ["Business info add हुआ", "WhatsApp connected", "AI bot active"],
+    quickCards: [["Business Info जोड़ें", "Knowledge base बनाएं"], ["AI Bot बनाएं", "Prompt automation configure और test करें"], ["WhatsApp connect करें", "Messaging channel live deploy करें"]],
+    checklist: ["Business info add हुआ", "AI bot active", "WhatsApp connected"],
     support: "Help चाहिए? WhatsApp us at",
     supportLink: "support",
   },
 };
 
-// ── WhatsApp QR panel (isolated so the hook only runs when step === 1) ────────
+// ── WhatsApp QR panel (isolated so the hook only runs when the WhatsApp step is active) ────────
 
 function WhatsAppQRPanel({ onConnected }: { onConnected: () => void }) {
   const { status, qrBase64, connected, error, refresh } = useWhatsAppQR();
@@ -388,19 +388,19 @@ const Agent = () => {
 
   const steps = [
     { ...t.steps[0], icon: Store },
-    { ...t.steps[1], icon: MessageCircle },
-    { ...t.steps[2], icon: Power },
+    { ...t.steps[1], icon: Sparkles },
+    { ...t.steps[2], icon: MessageCircle },
   ];
   const sideNav = [
     { label: t.nav[0], icon: LayoutDashboard, targetStep: 3 as Step },
     { label: t.nav[1], icon: Store, targetStep: 0 as Step },
-    { label: t.nav[2], icon: MessageCircle, targetStep: 1 as Step },
-    { label: t.nav[3], icon: Sparkles, targetStep: 2 as Step },
+    { label: t.nav[2], icon: Sparkles, targetStep: 1 as Step },
+    { label: t.nav[3], icon: MessageCircle, targetStep: 2 as Step },
   ];
 
   const canNextFrom0 = infoEntries.length > 0 || fileEntries.length > 0;
-  const canNextFrom1 = whatsappConnected;
-  const canNextFrom2 = aiOn && botEntries.length > 0;
+  const canNextFrom1 = aiOn && botEntries.length > 0;
+  const canNextFrom2 = whatsappConnected;
 
   const verticals = [
     { id: "coaching" as const,   label: "Coaching / EdTech",        icon: GraduationCap, hint: "Demo class, fees, batch timings" },
@@ -447,8 +447,8 @@ const Agent = () => {
 
   const checklist = [
     { done: infoEntries.length > 0 || fileEntries.length > 0, label: t.checklist[0], step: 0 as Step },
-    { done: whatsappConnected, label: t.checklist[1], step: 1 as Step },
-    { done: aiOn && botEntries.length > 0, label: t.checklist[2], step: 2 as Step },
+    { done: aiOn && botEntries.length > 0, label: t.checklist[1], step: 1 as Step },
+    { done: whatsappConnected, label: t.checklist[2], step: 2 as Step },
   ];
   const checklistDone = checklist.filter((c) => c.done).length;
   const setupComplete = checklistDone === 3;
@@ -1141,18 +1141,18 @@ const Agent = () => {
               </motion.div>
             )}
 
-            {/* ── Step 1 — Connect WhatsApp ── */}
-            {step === 1 && (
+            {/* ── Step 2 — Connect WhatsApp ── */}
+            {step === 2 && (
               <motion.div
-                key="step-1"
+                key="step-2"
                 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}
                 className="glass rounded-2xl p-8"
               >
                 <div className="flex items-center gap-3 mb-2">
                   <MessageCircle className="text-primary" />
-                  <h1 className="text-2xl font-display font-bold">{t.step1Title}</h1>
+                  <h1 className="text-2xl font-display font-bold">{t.step2Title}</h1>
                 </div>
-                <p className="text-muted-foreground mb-6">{t.step1Desc}</p>
+                <p className="text-muted-foreground mb-6">{t.step2Desc}</p>
 
                 <div className="mb-6 grid md:grid-cols-2 gap-3">
                   <div className="rounded-xl border border-border bg-muted/30 p-4">
@@ -1165,11 +1165,11 @@ const Agent = () => {
                   </div>
                 </div>
 
-                {/* QR panel is mounted only when step === 1 */}
+                {/* QR panel is mounted only when the WhatsApp step is active */}
                 <WhatsAppQRPanel
                   onConnected={() => {
                     setWhatsappConnected(true);
-                    toast.success("WhatsApp connected! 🎉");
+                    toast.success("WhatsApp connected!");
                   }}
                 />
 
@@ -1177,25 +1177,25 @@ const Agent = () => {
                   <Button variant="ghost" onClick={goBack}>
                     <ArrowLeft size={16} /> {t.back}
                   </Button>
-                  <Button variant="hero" size="lg" disabled={!canNextFrom1} onClick={goNext}>
-                    {t.next} <ArrowRight size={16} />
+                  <Button variant="hero" size="lg" disabled={!canNextFrom2} onClick={() => setStep(3)}>
+                    {t.finish} <Rocket size={16} />
                   </Button>
                 </div>
               </motion.div>
             )}
 
-            {/* ── Step 2 — AI Bot Configuration ── */}
-            {step === 2 && (
+            {/* ── Step 1 — AI Bot Configuration ── */}
+            {step === 1 && (
               <motion.div
-                key="step-2"
+                key="step-1"
                 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}
                 className="glass rounded-2xl p-8"
               >
                 <div className="flex items-center gap-3 mb-2">
-                  <Power className="text-primary" />
-                  <h1 className="text-2xl font-display font-bold">{t.step2Title}</h1>
+                  <Sparkles className="text-primary" />
+                  <h1 className="text-2xl font-display font-bold">{t.step1Title}</h1>
                 </div>
-                <p className="text-muted-foreground mb-6">{t.step2Desc}</p>
+                <p className="text-muted-foreground mb-6">{t.step1Desc}</p>
 
                 {/* Templates first */}
                 {(botEntries.length === 0 || editingBotId) && (
@@ -1418,8 +1418,8 @@ const Agent = () => {
                   <Button variant="ghost" onClick={goBack}>
                     <ArrowLeft size={16} /> {t.back}
                   </Button>
-                  <Button variant="hero" size="lg" disabled={!canNextFrom2} onClick={() => setStep(3)}>
-                    {t.finish} <Rocket size={16} />
+                  <Button variant="hero" size="lg" disabled={!canNextFrom1} onClick={goNext}>
+                    {t.next} <ArrowRight size={16} />
                   </Button>
                 </div>
               </motion.div>
