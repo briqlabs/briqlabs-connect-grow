@@ -1,6 +1,6 @@
 import { requireEnv, sleep } from "./http.ts";
 
-const DEFAULT_GENERATION_MODEL = "gemini-2.5-flash";
+const DEFAULT_GENERATION_MODEL = "gemini-1.5-flash";
 
 type GeminiGenerateResponse = {
   candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;

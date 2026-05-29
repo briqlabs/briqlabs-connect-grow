@@ -11,7 +11,12 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => null) as RagQueryInput | null;
     if (!body) return jsonResponse({ error: "Invalid JSON payload" }, 400);
 
-    await requireBusinessAccess(req, body.business_id);
+    //await requireBusinessAccess(req, body.business_id);
+    const authHeader = req.headers.get("Authorization");
+
+    if (!authHeader) {
+      return jsonResponse({ error: "Unauthorized" }, 401);
+    }
 
     const db = createClient(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"));
     const result = await processRagQuery(db, body);
