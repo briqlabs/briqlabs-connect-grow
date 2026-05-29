@@ -43,14 +43,21 @@ export async function getConversationMemory(db: SupabaseClient, businessId: stri
   const older = messages.slice(0, messages.length - 10);
   const recent = messages.slice(-10);
   const summaryInput = older.map((item) => `${item.role}: ${item.message}`).join("\n");
-  const summary = await generateText([
-    "Summarize this older WhatsApp conversation context in under 80 words.",
-    "Keep only durable customer preferences, unresolved questions, and facts already stated.",
-    "",
-    summaryInput,
-  ].join("\n"), { temperature: 0, maxOutputTokens: 160 });
+  
+  try {
+    const summary = await generateText([
+      "Summarize this older WhatsApp conversation context in under 80 words.",
+      "Keep only durable customer preferences, unresolved questions, and facts already stated.",
+      "",
+      summaryInput,
+    ].join("\n"), { temperature: 0, maxOutputTokens: 160 });
 
-  return [{ role: "system" as const, message: `Older conversation summary: ${summary}` }, ...recent];
+    return [{ role: "system" as const, message: `Older conversation summary: ${summary}` }, ...recent];
+  } catch (error) {
+    console.error("Memory summarization failed, using recent messages only", { error: (error as Error).message });
+    // Graceful fallback: skip older messages summary and just use recent messages
+    return recent;
+  }
 }
 
 export function formatMemory(messages: ChatMessage[], maxChars = 2500) {

@@ -24,7 +24,7 @@ export function buildRagPrompt(params: {
     })
     .join("\n\n");
 
-  return [
+  const prompt = [
     SYSTEM_PROMPT,
     "",
     "BUSINESS CONTEXT:",
@@ -37,6 +37,15 @@ export function buildRagPrompt(params: {
     "",
     "Return only the final WhatsApp reply text. Keep it concise, clear, and grounded in the context.",
   ].join("\n");
+
+  console.log("RAG prompt built", {
+    promptLength: prompt.length,
+    contextLength: context.length,
+    chunksCount: params.chunks.length,
+    memorySize: params.memory.length,
+  });
+
+  return prompt;
 }
 
 export const fallbackAnswer = "I could not find that information. Please contact the business directly.";

@@ -38,7 +38,13 @@ function assertEmbedding(values: unknown, label: string): number[] {
 }
 
 export async function embedText(text: string, taskType = "RETRIEVAL_QUERY"): Promise<number[]> {
+  console.log("Embedding single text", { 
+    textLength: text.length, 
+    taskType,
+    model: Deno.env.get("GEMINI_EMBEDDING_MODEL") ?? DEFAULT_EMBEDDING_MODEL,
+  });
   const [embedding] = await embedTexts([text], taskType);
+  console.log("Embedding complete", { embeddingLength: embedding.length });
   return embedding;
 }
 
