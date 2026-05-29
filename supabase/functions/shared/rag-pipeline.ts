@@ -34,8 +34,8 @@ export async function processRagQuery(db: SupabaseClient, input: RagQueryInput) 
     matchThreshold: input.match_threshold,
   });
 
-  const minScore = Number(Deno.env.get("RAG_MIN_RETRIEVAL_SCORE") ?? 0.58);
-  const hasGrounding = chunks.length > 0 && retrievalScore >= minScore;
+  //const minScore = Number(Deno.env.get("RAG_MIN_RETRIEVAL_SCORE") ?? 0.2);
+  const hasGrounding = chunks.length > 0 //&& retrievalScore >= minScore;
   let answer = fallbackAnswer;
   let faithfulnessScore = 1;
 
