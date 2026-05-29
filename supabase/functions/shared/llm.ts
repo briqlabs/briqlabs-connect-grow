@@ -1,12 +1,31 @@
 import { requireEnv, sleep } from "./http.ts";
 
-const DEFAULT_GENERATION_MODEL = "gemini-1.5-flash";
+const DEFAULT_NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1";
+const DEFAULT_NVIDIA_MODEL = "nvidia/llama-3.3-nemotron-super-49b-v1.5";
+const DEFAULT_GEMINI_EXTRACTION_MODEL = "gemini-1.5-flash";
 
-type GeminiGenerateResponse = {
-  candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+type ChatMessage = {
+  role: "system" | "user" | "assistant";
+  content: string;
 };
 
-type GeminiPart = {
+type ChatContentPart = {
+  type?: string;
+  text?: string;
+};
+
+type NvidiaChoice = {
+  text?: string;
+  message?: {
+    content?: string | ChatContentPart[];
+  };
+};
+
+type NvidiaChatResponse = {
+  choices?: NvidiaChoice[];
+};
+
+type ContentPart = {
   text?: string;
   inlineData?: {
     mimeType: string;
@@ -14,7 +33,26 @@ type GeminiPart = {
   };
 };
 
-function generationUrl(model: string) {
+type GeminiGenerateResponse = {
+  candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+};
+
+function nvidiaApiKey() {
+  const value = Deno.env.get("NVIDIA_API_KEY") ?? Deno.env.get("NVIDIA_NIM_API_KEY");
+  if (!value) throw new Error("Missing required environment variable: NVIDIA_API_KEY");
+  return value;
+}
+
+function nvidiaChatUrl() {
+  const baseUrl = Deno.env.get("NVIDIA_BASE_URL") ?? DEFAULT_NVIDIA_BASE_URL;
+  return `${baseUrl.replace(/\/+$/, "")}/chat/completions`;
+}
+
+function nvidiaModel() {
+  return Deno.env.get("NVIDIA_CHAT_MODEL") ?? Deno.env.get("NVIDIA_MODEL") ?? DEFAULT_NVIDIA_MODEL;
+}
+
+function geminiExtractionUrl(model: string) {
   const apiKey = encodeURIComponent(requireEnv("GEMINI_API_KEY"));
   return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 }
@@ -35,14 +73,56 @@ async function withRetry<T>(operation: () => Promise<T>, label: string, attempts
   throw lastError instanceof Error ? lastError : new Error(String(lastError));
 }
 
-export async function generateText(prompt: string, options: { temperature?: number; maxOutputTokens?: number } = {}) {
-  return generateTextFromParts([{ text: prompt }], options);
+function extractTextContent(choice: NvidiaChoice) {
+  const messageContent = choice.message?.content;
+  if (typeof messageContent === "string") return messageContent.trim();
+  if (Array.isArray(messageContent)) {
+    return messageContent
+      .map((part) => part.text ?? "")
+      .join("")
+      .trim();
+  }
+  return choice.text?.trim() ?? "";
 }
 
-export async function generateTextFromParts(parts: GeminiPart[], options: { temperature?: number; maxOutputTokens?: number } = {}) {
-  const model = Deno.env.get("GEMINI_MODEL") ?? DEFAULT_GENERATION_MODEL;
+async function generateNvidiaChat(
+  messages: ChatMessage[],
+  options: { temperature?: number; maxOutputTokens?: number } = {},
+) {
   const data = await withRetry(async () => {
-    const resp = await fetch(generationUrl(model), {
+    const resp = await fetch(nvidiaChatUrl(), {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${nvidiaApiKey()}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: nvidiaModel(),
+        messages,
+        temperature: options.temperature ?? 0.2,
+        max_tokens: options.maxOutputTokens ?? 512,
+        stream: false,
+      }),
+    });
+
+    if (!resp.ok) {
+      throw new Error(`NVIDIA generation error ${resp.status}: ${await resp.text()}`);
+    }
+    return await resp.json() as NvidiaChatResponse;
+  }, "NVIDIA generation");
+
+  const answer = data.choices?.map(extractTextContent).find(Boolean);
+  if (!answer) throw new Error("NVIDIA returned an empty response");
+  return answer;
+}
+
+async function generateGeminiFromParts(
+  parts: ContentPart[],
+  options: { temperature?: number; maxOutputTokens?: number } = {},
+) {
+  const model = Deno.env.get("GEMINI_EXTRACTION_MODEL") ?? Deno.env.get("GEMINI_MODEL") ?? DEFAULT_GEMINI_EXTRACTION_MODEL;
+  const data = await withRetry(async () => {
+    const resp = await fetch(geminiExtractionUrl(model), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -53,13 +133,26 @@ export async function generateTextFromParts(parts: GeminiPart[], options: { temp
         },
       }),
     });
-    if (!resp.ok) throw new Error(`Gemini generation error ${resp.status}: ${await resp.text()}`);
+    if (!resp.ok) throw new Error(`Gemini extraction error ${resp.status}: ${await resp.text()}`);
     return await resp.json() as GeminiGenerateResponse;
-  }, "Gemini generation");
+  }, "Gemini extraction");
 
   const answer = data.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("").trim();
-  if (!answer) throw new Error("Gemini returned an empty response");
+  if (!answer) throw new Error("Gemini extraction returned an empty response");
   return answer;
+}
+
+export async function generateText(prompt: string, options: { temperature?: number; maxOutputTokens?: number } = {}) {
+  return await generateNvidiaChat([{ role: "user", content: prompt }], options);
+}
+
+export async function generateTextFromParts(parts: ContentPart[], options: { temperature?: number; maxOutputTokens?: number } = {}) {
+  const hasInlineData = parts.some((part) => part.inlineData);
+  if (hasInlineData) {
+    return await generateGeminiFromParts(parts, options);
+  }
+
+  return await generateText(parts.map((part) => part.text ?? "").join("\n"), options);
 }
 
 export async function generateJson<T>(prompt: string, fallback: T): Promise<T> {
@@ -68,7 +161,7 @@ export async function generateJson<T>(prompt: string, fallback: T): Promise<T> {
   try {
     return JSON.parse(jsonText) as T;
   } catch (error) {
-    console.warn("Failed to parse Gemini JSON response", { raw, error: (error as Error).message });
+    console.warn("Failed to parse NVIDIA JSON response", { raw, error: (error as Error).message });
     return fallback;
   }
 }
