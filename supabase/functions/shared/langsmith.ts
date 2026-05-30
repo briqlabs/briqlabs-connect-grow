@@ -195,12 +195,11 @@ export async function createRagRun(params: {
     name: "rag-query",
     runType: "chain",
     inputs: {
-      business_id: params.businessId,
       question: params.question,
-      chunk_count: params.chunkCount ?? 0,
     },
     metadata: {
       business_id: params.businessId,
+      chunk_count: params.chunkCount ?? 0,
       ...params.metadata,
     },
   });
