@@ -223,18 +223,20 @@ export async function completeRagRun(params: {
       retrieval_score: params.retrievalScore,
       faithfulness_score: params.faithfulnessScore,
       latency_ms: params.latencyMs,
+      chunks_retrieved: params.chunks.length,
     },
     status: "success",
   });
 
-  // Add evaluation feedback
+  // Add retrieval score feedback as primary metric
   await addFeedback({
     runId,
     key: "retrieval_score",
     score: params.retrievalScore,
-    comment: `Retrieved ${params.chunks.length} chunks`,
+    comment: `Retrieved ${params.chunks.length} chunks with similarity score ${params.retrievalScore.toFixed(3)}`,
   });
 
+  // Add faithfulness score feedback
   await addFeedback({
     runId,
     key: "faithfulness_score",
@@ -242,6 +244,7 @@ export async function completeRagRun(params: {
     comment: params.faithfulnessScore >= 0.65 ? "Faithful" : "Below threshold",
   });
 
+  // Add latency feedback
   await addFeedback({
     runId,
     key: "latency_ms",
