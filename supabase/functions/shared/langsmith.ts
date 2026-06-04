@@ -212,6 +212,11 @@ export async function completeRagRun(params: {
   retrievalScore: number;
   faithfulnessScore: number;
   latencyMs: number;
+  model?: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  totalTokens?: number;
+  costUsd?: number;
 }): Promise<void> {
   const runId = params.runId;
   if (!runId) return;
@@ -220,20 +225,38 @@ export async function completeRagRun(params: {
     runId,
     outputs: {
       answer: params.answer,
-      retrieval_score: params.retrievalScore,
-      faithfulness_score: params.faithfulnessScore,
-      latency_ms: params.latencyMs,
-      chunks_retrieved: params.chunks.length,
+      chunks_count: params.chunks.length,
+      model: params.model,
+      input_tokens: params.inputTokens ?? 0,
+      output_tokens: params.outputTokens ?? 0,
+      total_tokens: params.totalTokens ?? 0,
+      cost_usd: params.costUsd ?? 0,
     },
     status: "success",
   });
 
-  // Add retrieval score feedback as primary metric
+  // Add retrieval score as separate column
   await addFeedback({
     runId,
     key: "retrieval_score",
     score: params.retrievalScore,
-    comment: `Retrieved ${params.chunks.length} chunks with similarity score ${params.retrievalScore.toFixed(3)}`,
+  });
+
+  // Add retrieved chunks count as separate column
+  await addFeedback({
+    runId,
+    key: "chunks_retrieved",
+    value: params.chunks.length.toString(),
+    comment: params.chunks.map((c) => c.chunk_text.substring(0, 80)).join(" | "),
+  });
+
+  // Add retrieved chunks content as separate column
+  await addFeedback({
+    runId,
+    key: "chunks_content",
+    value: params.chunks
+      .map((chunk, idx) => `[${idx + 1}] ${chunk.chunk_text.substring(0, 150)}`)
+      .join("\n"),
   });
 
   // Add faithfulness score feedback
@@ -241,7 +264,6 @@ export async function completeRagRun(params: {
     runId,
     key: "faithfulness_score",
     score: params.faithfulnessScore,
-    comment: params.faithfulnessScore >= 0.65 ? "Faithful" : "Below threshold",
   });
 
   // Add latency feedback
@@ -250,6 +272,51 @@ export async function completeRagRun(params: {
     key: "latency_ms",
     score: params.latencyMs,
   });
+
+  // Add model information
+  if (params.model) {
+    await addFeedback({
+      runId,
+      key: "model",
+      value: params.model,
+    });
+  }
+
+  // Add token metrics
+  if (params.inputTokens !== undefined || params.outputTokens !== undefined) {
+    await addFeedback({
+      runId,
+      key: "input_tokens",
+      score: params.inputTokens ?? 0,
+      comment: `Input tokens: ${params.inputTokens ?? 0}`,
+    });
+
+    await addFeedback({
+      runId,
+      key: "output_tokens",
+      score: params.outputTokens ?? 0,
+      comment: `Output tokens: ${params.outputTokens ?? 0}`,
+    });
+
+    if (params.totalTokens !== undefined) {
+      await addFeedback({
+        runId,
+        key: "total_tokens",
+        score: params.totalTokens,
+        comment: `Total tokens: ${params.totalTokens}`,
+      });
+    }
+  }
+
+  // Add cost metric
+  if (params.costUsd !== undefined && params.costUsd > 0) {
+    await addFeedback({
+      runId,
+      key: "cost_usd",
+      score: params.costUsd,
+      comment: `Cost: $${params.costUsd.toFixed(6)}`,
+    });
+  }
 }
 
 export async function trackEvaluation(params: {

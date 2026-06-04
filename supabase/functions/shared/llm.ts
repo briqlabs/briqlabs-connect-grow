@@ -26,6 +26,23 @@ type NvidiaChoice = {
 
 type NvidiaChatResponse = {
   choices?: NvidiaChoice[];
+  usage?: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    total_tokens?: number;
+  };
+};
+
+export type TokenUsage = {
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+};
+
+export type TextGenerationResult = {
+  text: string;
+  usage?: TokenUsage;
+  model?: string;
 };
 
 type ContentPart = {
@@ -109,10 +126,10 @@ function extractTextContent(choice: NvidiaChoice) {
   return choice.text?.trim() ?? "";
 }
 
-async function generateNvidiaChat(
+async function generateNvidiaChatWithUsage(
   messages: ChatMessage[],
   options: { temperature?: number; maxOutputTokens?: number } = {},
-) {
+): Promise<TextGenerationResult> {
   const model = nvidiaModel();
   const apiUrl = nvidiaChatUrl();
   
@@ -149,6 +166,7 @@ async function generateNvidiaChat(
 
   console.log("NVIDIA response received", { 
     choicesLength: data.choices?.length,
+    usage: data.usage,
     firstChoice: JSON.stringify(data.choices?.[0])?.slice(0, 500),
   });
 
@@ -159,7 +177,26 @@ async function generateNvidiaChat(
     });
     throw new Error(`NVIDIA returned an empty response. Choices: ${data.choices?.length ?? 0}`);
   }
-  return answer;
+
+  const usage = data.usage ? {
+    inputTokens: data.usage.prompt_tokens ?? 0,
+    outputTokens: data.usage.completion_tokens ?? 0,
+    totalTokens: data.usage.total_tokens ?? 0,
+  } : undefined;
+
+  return {
+    text: answer,
+    usage,
+    model,
+  };
+}
+
+async function generateNvidiaChat(
+  messages: ChatMessage[],
+  options: { temperature?: number; maxOutputTokens?: number } = {},
+) {
+  const result = await generateNvidiaChatWithUsage(messages, options);
+  return result.text;
 }
 
 async function generateGeminiFromParts(
@@ -190,6 +227,10 @@ async function generateGeminiFromParts(
 
 export async function generateText(prompt: string, options: { temperature?: number; maxOutputTokens?: number } = {}) {
   return await generateNvidiaChat([{ role: "user", content: prompt }], options);
+}
+
+export async function generateTextWithUsage(prompt: string, options: { temperature?: number; maxOutputTokens?: number } = {}): Promise<TextGenerationResult> {
+  return await generateNvidiaChatWithUsage([{ role: "user", content: prompt }], options);
 }
 
 export async function generateTextFromParts(parts: ContentPart[], options: { temperature?: number; maxOutputTokens?: number } = {}) {
@@ -227,3 +268,30 @@ export async function generateJson<T>(prompt: string, fallback: T): Promise<T> {
     return fallback;
   }
 }
+
+/**
+ * Calculate the cost of an API call based on model and token usage
+ * Prices are based on current NVIDIA and Gemini API pricing
+ */
+export function calculateApiCost(model: string, usage: TokenUsage): number {
+  // NVIDIA Nemotron pricing (as of latest update)
+  // https://build.nvidia.com/models
+  if (model.includes("nemotron")) {
+    const inputCostPerMToken = 0.135 / 1000000; // $0.135 per 1M tokens
+    const outputCostPerMToken = 0.40 / 1000000; // $0.40 per 1M tokens
+    return (usage.inputTokens * inputCostPerMToken) + (usage.outputTokens * outputCostPerMToken);
+  }
+
+  // Gemini pricing (gemini-1.5-flash)
+  if (model.includes("gemini")) {
+    const inputCostPerMToken = 0.075 / 1000000; // $0.075 per 1M tokens
+    const outputCostPerMToken = 0.30 / 1000000; // $0.30 per 1M tokens
+    return (usage.inputTokens * inputCostPerMToken) + (usage.outputTokens * outputCostPerMToken);
+  }
+
+  // Default fallback - conservative estimate
+  const defaultInputCostPerMToken = 0.001 / 1000000;
+  const defaultOutputCostPerMToken = 0.001 / 1000000;
+  return (usage.inputTokens * defaultInputCostPerMToken) + (usage.outputTokens * defaultOutputCostPerMToken);
+}
+
