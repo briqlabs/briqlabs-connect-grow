@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { evaluateFaithfulness, logEvaluation } from "./evaluation.ts";
-import { generateText } from "./llm.ts";
+import { generateTextWithUsage, calculateApiCost } from "./llm.ts";
 import { getConversationMemory, storeChatMessage } from "./memory.ts";
 import { buildRagPrompt, fallbackAnswer } from "./prompt-builder.ts";
 import { retrieveKnowledgeChunks } from "./vector-search.ts";
@@ -65,12 +65,34 @@ export async function processRagQuery(db: SupabaseClient, input: RagQueryInput) 
     const hasGrounding = chunks.length > 0 //&& retrievalScore >= minScore;
     let answer = fallbackAnswer;
     let faithfulnessScore = 1;
+    let model: string | undefined;
+    let inputTokens: number | undefined;
+    let outputTokens: number | undefined;
+    let totalTokens: number | undefined;
+    let costUsd: number | undefined;
 
     if (hasGrounding) {
       try {
         console.log("Starting text generation");
         const prompt = buildRagPrompt({ question: message, chunks, memory });
-        answer = await generateText(prompt, { temperature: 0.15, maxOutputTokens: 512 });
+        const result = await generateTextWithUsage(prompt, { temperature: 0.15, maxOutputTokens: 512 });
+        answer = result.text;
+        model = result.model;
+        
+        if (result.usage) {
+          inputTokens = result.usage.inputTokens;
+          outputTokens = result.usage.outputTokens;
+          totalTokens = result.usage.totalTokens;
+          costUsd = calculateApiCost(model || "", result.usage);
+          console.log("Token usage tracked", { 
+            model, 
+            inputTokens, 
+            outputTokens, 
+            totalTokens,
+            costUsd: `$${costUsd.toFixed(6)}`,
+          });
+        }
+        
         console.log("Text generated", { answerLength: answer.length, answer: answer.slice(0, 150) });
 
         console.log("Starting faithfulness evaluation");
@@ -143,6 +165,11 @@ export async function processRagQuery(db: SupabaseClient, input: RagQueryInput) 
       retrievalScore,
       faithfulnessScore,
       latencyMs,
+      model,
+      inputTokens,
+      outputTokens,
+      totalTokens,
+      costUsd,
     });
 
     return {
