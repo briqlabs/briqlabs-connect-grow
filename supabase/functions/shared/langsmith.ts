@@ -10,6 +10,7 @@ interface LangSmithRun {
   start_time: string;
   end_time?: string;
   session_name?: string;
+  parent_run_id?: string;
   extra?: Record<string, unknown>;
 }
 
@@ -82,6 +83,7 @@ export async function createRun(params: {
   runType: "llm" | "chain" | "tool" | "retriever";
   inputs: Record<string, unknown>;
   metadata?: Record<string, unknown>;
+  parentRunId?: string;
 }): Promise<string | null> {
   const runId = crypto.randomUUID();
   const project = getLangSmithProject();
@@ -93,6 +95,7 @@ export async function createRun(params: {
     inputs: params.inputs,
     start_time: new Date().toISOString(),
     session_name: project,
+    parent_run_id: params.parentRunId,
     extra: {
       metadata: {
         business_id: params.metadata?.business_id,
@@ -366,5 +369,181 @@ export async function trackError(params: {
   console.log("LangSmith error tracked", {
     runId: params.runId,
     stage: params.stage,
+  });
+}
+
+export async function createRetrievalRun(params: {
+  parentRunId: string;
+  question: string;
+  businessId: string;
+}): Promise<string | null> {
+  return await createRun({
+    name: "retrieval",
+    runType: "retriever",
+    inputs: {
+      question: params.question,
+    },
+    metadata: {
+      business_id: params.businessId,
+    },
+    parentRunId: params.parentRunId,
+  });
+}
+
+export async function completeRetrievalRun(params: {
+  runId: string | null;
+  chunkCount: number;
+  retrievalScore: number;
+  chunks: Array<{ chunk_text: string }>;
+}): Promise<void> {
+  const runId = params.runId;
+  if (!runId) return;
+
+  await updateRun({
+    runId,
+    outputs: {
+      chunk_count: params.chunkCount,
+      retrieval_score: params.retrievalScore,
+      chunks: params.chunks.map((c, idx) => ({
+        id: idx + 1,
+        text: c.chunk_text.substring(0, 200),
+      })),
+    },
+    status: "success",
+  });
+
+  console.log("LangSmith retrieval run completed", {
+    runId,
+    chunkCount: params.chunkCount,
+    retrievalScore: params.retrievalScore,
+  });
+}
+
+export async function createGenerationRun(params: {
+  parentRunId: string;
+  question: string;
+  chunks: Array<{ chunk_text: string }>;
+  businessId: string;
+}): Promise<string | null> {
+  return await createRun({
+    name: "llm-generation",
+    runType: "llm",
+    inputs: {
+      question: params.question,
+      chunk_count: params.chunks.length,
+    },
+    metadata: {
+      business_id: params.businessId,
+    },
+    parentRunId: params.parentRunId,
+  });
+}
+
+export async function completeGenerationRun(params: {
+  runId: string | null;
+  answer: string;
+  model: string;
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  costUsd: number;
+}): Promise<void> {
+  const runId = params.runId;
+  if (!runId) return;
+
+  await updateRun({
+    runId,
+    outputs: {
+      answer: params.answer,
+      model: params.model,
+      input_tokens: params.inputTokens,
+      output_tokens: params.outputTokens,
+      total_tokens: params.totalTokens,
+      cost_usd: params.costUsd,
+    },
+    status: "success",
+    metadata: {
+      model: params.model,
+    },
+  });
+
+  // Add individual feedback metrics for generation
+  await addFeedback({
+    runId,
+    key: "model",
+    value: params.model,
+  });
+
+  await addFeedback({
+    runId,
+    key: "input_tokens",
+    score: params.inputTokens,
+  });
+
+  await addFeedback({
+    runId,
+    key: "output_tokens",
+    score: params.outputTokens,
+  });
+
+  await addFeedback({
+    runId,
+    key: "total_tokens",
+    score: params.totalTokens,
+  });
+
+  await addFeedback({
+    runId,
+    key: "cost_usd",
+    score: params.costUsd,
+    comment: `Cost: $${params.costUsd.toFixed(6)}`,
+  });
+
+  console.log("LangSmith generation run completed", {
+    runId,
+    model: params.model,
+    totalTokens: params.totalTokens,
+    costUsd: `$${params.costUsd.toFixed(6)}`,
+  });
+}
+
+export async function createEvaluationRun(params: {
+  parentRunId: string;
+  businessId: string;
+  evaluationType: "faithfulness";
+}): Promise<string | null> {
+  return await createRun({
+    name: `evaluation-${params.evaluationType}`,
+    runType: "tool",
+    inputs: {
+      type: params.evaluationType,
+    },
+    metadata: {
+      business_id: params.businessId,
+    },
+    parentRunId: params.parentRunId,
+  });
+}
+
+export async function completeEvaluationRun(params: {
+  runId: string | null;
+  score: number;
+  reasoning?: string;
+}): Promise<void> {
+  const runId = params.runId;
+  if (!runId) return;
+
+  await updateRun({
+    runId,
+    outputs: {
+      score: params.score,
+      reasoning: params.reasoning,
+    },
+    status: "success",
+  });
+
+  console.log("LangSmith evaluation run completed", {
+    runId,
+    score: params.score,
   });
 }
