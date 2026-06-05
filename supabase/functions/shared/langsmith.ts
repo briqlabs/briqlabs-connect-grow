@@ -116,6 +116,7 @@ export async function updateRun(params: {
   outputs: Record<string, unknown>;
   status?: "success" | "error";
   error?: string;
+  metadata?: Record<string, unknown>;
 }): Promise<void> {
   const updates: Partial<LangSmithRun> = {
     outputs: params.outputs,
@@ -124,6 +125,12 @@ export async function updateRun(params: {
 
   if (params.error) {
     updates.error = params.error;
+  }
+
+  if (params.metadata) {
+    updates.extra = {
+      metadata: params.metadata,
+    };
   }
 
   await makeRequest("PATCH", `/runs/${params.runId}`, updates);
@@ -233,6 +240,9 @@ export async function completeRagRun(params: {
       cost_usd: params.costUsd ?? 0,
     },
     status: "success",
+    metadata: {
+      model: params.model,
+    },
   });
 
   // Add retrieval score as separate column
