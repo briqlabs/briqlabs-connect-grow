@@ -5,7 +5,17 @@ import { getConversationMemory, storeChatMessage } from "./memory.ts";
 import { buildRagPrompt, fallbackAnswer } from "./prompt-builder.ts";
 import { retrieveKnowledgeChunks } from "./vector-search.ts";
 import { sendEvolutionReply } from "./whatsapp.ts";
-import { completeRagRun, createRagRun, trackError } from "./langsmith.ts";
+import { 
+  completeRagRun, 
+  createRagRun, 
+  trackError,
+  createRetrievalRun,
+  completeRetrievalRun,
+  createGenerationRun,
+  completeGenerationRun,
+  createEvaluationRun,
+  completeEvaluationRun,
+} from "./langsmith.ts";
 
 export type RagQueryInput = {
   business_id: string;
@@ -61,6 +71,23 @@ export async function processRagQuery(db: SupabaseClient, input: RagQueryInput) 
       },
     });
 
+    // Track retrieval as a child run
+    let retrievalRunId: string | null = null;
+    if (langsmithRunId) {
+      retrievalRunId = await createRetrievalRun({
+        parentRunId: langsmithRunId,
+        question: message,
+        businessId,
+      });
+
+      await completeRetrievalRun({
+        runId: retrievalRunId,
+        chunkCount: chunks.length,
+        retrievalScore,
+        chunks,
+      });
+    }
+
     //const minScore = Number(Deno.env.get("RAG_MIN_RETRIEVAL_SCORE") ?? 0.2);
     const hasGrounding = chunks.length > 0 //&& retrievalScore >= minScore;
     let answer = fallbackAnswer;
@@ -68,11 +95,23 @@ export async function processRagQuery(db: SupabaseClient, input: RagQueryInput) 
     let model: string | undefined;
     let inputTokens: number | undefined;
     let outputTokens: number | undefined;
+    let generationRunId: string | null = null;
+    let evaluationRunId: string | null = null;
     let totalTokens: number | undefined;
     let costUsd: number | undefined;
 
     if (hasGrounding) {
       try {
+        // Create generation run (child run)
+        if (langsmithRunId) {
+          generationRunId = await createGenerationRun({
+            parentRunId: langsmithRunId,
+            question: message,
+            chunks,
+            businessId,
+          });
+        }
+
         console.log("Starting text generation");
         const prompt = buildRagPrompt({ question: message, chunks, memory });
         const result = await generateTextWithUsage(prompt, { temperature: 0.15, maxOutputTokens: 512 });
@@ -93,11 +132,39 @@ export async function processRagQuery(db: SupabaseClient, input: RagQueryInput) 
           });
         }
         
+        // Complete generation run with model and token details
+        if (generationRunId && model && inputTokens !== undefined && outputTokens !== undefined && totalTokens !== undefined && costUsd !== undefined) {
+          await completeGenerationRun({
+            runId: generationRunId,
+            answer,
+            model,
+            inputTokens,
+            outputTokens,
+            totalTokens,
+            costUsd,
+          });
+        }
+        
         console.log("Text generated", { answerLength: answer.length, answer: answer.slice(0, 150) });
 
         console.log("Starting faithfulness evaluation");
         faithfulnessScore = await evaluateFaithfulness(message, chunks, answer, langsmithRunId ?? undefined);
         console.log("Faithfulness evaluated", { faithfulnessScore });
+
+        // Create evaluation run (child run)
+        if (langsmithRunId) {
+          evaluationRunId = await createEvaluationRun({
+            parentRunId: langsmithRunId,
+            businessId,
+            evaluationType: "faithfulness",
+          });
+
+          await completeEvaluationRun({
+            runId: evaluationRunId,
+            score: faithfulnessScore,
+            reasoning: `Faithfulness score for generated response`,
+          });
+        }
 
         const minFaithfulness = Number(Deno.env.get("RAG_MIN_FAITHFULNESS_SCORE") ?? 0.65);
         if (faithfulnessScore < minFaithfulness) {
