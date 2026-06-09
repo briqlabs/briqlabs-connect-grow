@@ -1,5 +1,4 @@
-import { useEffect } from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Upload, MessageCircle, Check, ArrowRight, ArrowLeft,
@@ -28,6 +27,22 @@ type TestChatMessage = {
   message: string;
   retrievalScore?: number;
   faithfulnessScore?: number;
+};
+
+const TEST_CHAT_HISTORY_KEY_PREFIX = "briqlabs-test-chat-history";
+
+const getTestChatHistoryKey = (userId: string) => `${TEST_CHAT_HISTORY_KEY_PREFIX}:${userId}`;
+
+const isTestChatMessage = (value: unknown): value is TestChatMessage => {
+  if (!value || typeof value !== "object") return false;
+  const message = value as TestChatMessage;
+  return (
+    typeof message.id === "string" &&
+    (message.role === "user" || message.role === "assistant") &&
+    typeof message.message === "string" &&
+    (message.retrievalScore === undefined || typeof message.retrievalScore === "number") &&
+    (message.faithfulnessScore === undefined || typeof message.faithfulnessScore === "number")
+  );
 };
 
 const agentCopy = {
@@ -385,6 +400,8 @@ const Agent = () => {
   const [testQuestion, setTestQuestion] = useState("");
   const [testingBot, setTestingBot] = useState(false);
   const [syncingKnowledge, setSyncingKnowledge] = useState(false);
+  const testChatHydratedFor = useRef<string | null>(null);
+  const testChatHistoryKey = user?.id ? getTestChatHistoryKey(user.id) : null;
 
   const steps = [
     { ...t.steps[0], icon: Store },
@@ -452,6 +469,29 @@ const Agent = () => {
   ];
   const checklistDone = checklist.filter((c) => c.done).length;
   const setupComplete = checklistDone === 3;
+
+  useEffect(() => {
+    if (!testChatHistoryKey) {
+      testChatHydratedFor.current = null;
+      setTestMessages([]);
+      return;
+    }
+
+    try {
+      const stored = window.localStorage.getItem(testChatHistoryKey);
+      const parsed = stored ? JSON.parse(stored) : [];
+      setTestMessages(Array.isArray(parsed) ? parsed.filter(isTestChatMessage) : []);
+    } catch {
+      setTestMessages([]);
+    } finally {
+      testChatHydratedFor.current = testChatHistoryKey;
+    }
+  }, [testChatHistoryKey]);
+
+  useEffect(() => {
+    if (!testChatHistoryKey || testChatHydratedFor.current !== testChatHistoryKey) return;
+    window.localStorage.setItem(testChatHistoryKey, JSON.stringify(testMessages));
+  }, [testChatHistoryKey, testMessages]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -785,6 +825,14 @@ const Agent = () => {
     } finally {
       setSyncingKnowledge(false);
     }
+  };
+
+  const clearTestChatHistory = () => {
+    setTestMessages([]);
+    if (testChatHistoryKey) {
+      window.localStorage.removeItem(testChatHistoryKey);
+    }
+    toast.success("Test chat history cleared");
   };
 
   const sendTestQuestion = async () => {
@@ -1330,10 +1378,16 @@ const Agent = () => {
 	                        <p className="text-xs text-muted-foreground">Business info and uploaded files</p>
 	                      </div>
 	                    </div>
-	                    <Button type="button" variant="outline" size="sm" onClick={syncKnowledge} disabled={syncingKnowledge || testingBot}>
-	                      {syncingKnowledge ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />}
-	                      Sync knowledge
-	                    </Button>
+	                    <div className="flex flex-wrap gap-2">
+	                      <Button type="button" variant="outline" size="sm" onClick={clearTestChatHistory} disabled={testMessages.length === 0 || testingBot}>
+	                        <Trash2 size={15} />
+	                        Clear history
+	                      </Button>
+	                      <Button type="button" variant="outline" size="sm" onClick={syncKnowledge} disabled={syncingKnowledge || testingBot}>
+	                        {syncingKnowledge ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />}
+	                        Sync knowledge
+	                      </Button>
+	                    </div>
 	                  </div>
 
 	                  <div className="h-[360px] overflow-y-auto bg-muted/20 p-4">
