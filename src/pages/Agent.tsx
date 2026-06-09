@@ -730,10 +730,10 @@ const Agent = () => {
       toast.error("User session not found");
       return;
     }
-    const name = botName.trim();
     const prompt = botPrompt.trim();
-    if (name.length < 2 || prompt.length < 10) {
-      toast.error("Please provide a bot name and meaningful prompt");
+    const name = botName.trim() || "AI Assistant";
+    if (prompt.length < 10) {
+      toast.error("Please provide a meaningful prompt");
       return;
     }
 
@@ -775,16 +775,6 @@ const Agent = () => {
     } finally {
       setSaving(false);
     }
-  };
-
-  const deleteBot = async (id: string) => {
-    const { error } = await supabase.from("ai_bots").delete().eq("id", id);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    setBotEntries((prev) => prev.filter((bot) => bot.id !== id));
-    toast.success("Bot deleted");
   };
 
   const removePendingFile = (fileName: string) => {
@@ -1294,7 +1284,7 @@ const Agent = () => {
 
                 <div className="rounded-xl border border-border bg-muted/30 p-5 space-y-4">
                   <div className="flex items-center justify-between">
-                    <p className="font-semibold">{editingBotId ? t.editBot : botEntries.length >= 1 ? t.yourBot : t.createBot}</p>
+                    <p className="font-semibold">{editingBotId ? t.editBot : t.createBot}</p>
                     {editingBotId && (
                       <Button type="button" size="sm" variant="ghost" onClick={resetBotForm}>
                         {t.cancelEdit}
@@ -1302,21 +1292,8 @@ const Agent = () => {
                     )}
                   </div>
 
-                  {botEntries.length >= 1 && !editingBotId ? (
-                    <div className="rounded-lg border border-dashed border-border bg-background/60 p-4 text-sm text-muted-foreground">
-                      {t.oneBot}
-                    </div>
-                  ) : (
+                  {(botEntries.length === 0 || editingBotId) && (
                   <>
-                  <div className="space-y-2">
-                    <Label htmlFor="bot-name">{t.botName}</Label>
-                    <Input
-                      id="bot-name"
-                      placeholder={t.placeholders.botName}
-                      value={botName}
-                      onChange={(e) => setBotName(e.target.value)}
-                    />
-                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="bot-prompt">{t.botPrompt}</Label>
                     <Textarea
@@ -1351,9 +1328,7 @@ const Agent = () => {
 
 		                <div className="rounded-xl border border-border overflow-hidden">
 	                  <div className="grid grid-cols-12 px-4 py-3 text-xs uppercase text-muted-foreground border-b border-border">
-                    <span className="col-span-2">{t.table.bot}</span>
-                    <span className="col-span-6">{t.table.prompt}</span>
-                    <span className="col-span-2">{t.table.status}</span>
+                    <span className="col-span-10">{t.table.prompt}</span>
                     <span className="col-span-2 text-right">{t.labels.actions}</span>
                   </div>
                   {botEntries.length === 0 ? (
@@ -1361,15 +1336,10 @@ const Agent = () => {
                   ) : (
                     botEntries.map((bot) => (
                       <div key={bot.id} className="grid grid-cols-12 px-4 py-3 text-sm border-b border-border last:border-b-0">
-                        <span className="col-span-2 font-medium">{bot.name}</span>
-                        <span className="col-span-6 text-muted-foreground">{bot.prompt}</span>
-                        <span className="col-span-2">{bot.is_active ? t.table.active : t.table.inactive}</span>
-                        <div className="col-span-2 flex justify-end gap-1">
+                        <span className="col-span-10 text-muted-foreground break-words">{bot.prompt}</span>
+                        <div className="col-span-2 flex justify-end">
                           <Button variant="ghost" size="icon" onClick={() => editBot(bot.id)}>
                             <Pencil size={16} />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => void deleteBot(bot.id)}>
-                            <Trash2 size={16} />
                           </Button>
                         </div>
                       </div>
@@ -1391,10 +1361,6 @@ const Agent = () => {
 	                      </div>
 	                    </div>
 	                    <div className="flex flex-wrap gap-2">
-	                      <Button type="button" variant="outline" size="sm" onClick={clearTestChatHistory} disabled={testMessages.length === 0 || testingBot}>
-	                        <Trash2 size={15} />
-	                        Clear history
-	                      </Button>
 	                      <Button type="button" variant="outline" size="sm" onClick={syncKnowledge} disabled={syncingKnowledge || testingBot}>
 	                        {syncingKnowledge ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />}
 	                        Sync knowledge
@@ -1475,6 +1441,12 @@ const Agent = () => {
 	                        aria-label="Send test message"
 	                      >
 	                        {testingBot ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+	                      </Button>
+	                    </div>
+	                    <div className="mt-2 flex justify-start">
+	                      <Button type="button" variant="ghost" size="sm" onClick={clearTestChatHistory} disabled={testMessages.length === 0 || testingBot}>
+	                        <Trash2 size={15} />
+	                        Clear history
 	                      </Button>
 	                    </div>
 	                  </div>
