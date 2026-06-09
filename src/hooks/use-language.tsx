@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 export type Language = "hinglish" | "en" | "hi";
 
 const LANGUAGE_KEY = "briqlabs-language";
+const DEFAULT_LANGUAGE: Language = "en";
 
 const labels: Record<Language, string> = {
   hinglish: "Hinglish",
@@ -32,9 +33,9 @@ const isLanguage = (value: string | null): value is Language =>
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguageState] = useState<Language>(() => {
-    if (typeof window === "undefined") return "hinglish";
+    if (typeof window === "undefined") return DEFAULT_LANGUAGE;
     const stored = window.localStorage.getItem(LANGUAGE_KEY);
-    return isLanguage(stored) ? stored : "hinglish";
+    return isLanguage(stored) ? stored : DEFAULT_LANGUAGE;
   });
 
   useEffect(() => {
