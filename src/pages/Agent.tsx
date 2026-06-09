@@ -387,7 +387,6 @@ const Agent = () => {
   const [infoEntries, setInfoEntries] = useState<Array<{ id: string; name: string; description: string; created_at: string }>>([]);
   const [fileEntries, setFileEntries] = useState<Array<{ id: string; file_name: string; file_path: string; created_at: string; file_size: number | null }>>([]);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
-  const [activeTab, setActiveTab] = useState<"info" | "files">("info");
   const [saving,       setSaving]       = useState(false);
   const [whatsappConnected, setWhatsappConnected] = useState(false);
   const [aiOn, setAiOn] = useState(false);
@@ -992,7 +991,7 @@ const Agent = () => {
           </div>
         </header>
 
-        <main className="container mx-auto max-w-2xl px-6 py-10">
+        <main className="container mx-auto max-w-7xl px-6 py-8">
           {/* Stepper */}
           <div className="mb-10">
             <div className="flex items-center justify-between">
@@ -1065,25 +1064,15 @@ const Agent = () => {
                   </div>
                 </div>
 
-                <div className="space-y-5">
-                  <div className="flex rounded-lg border border-border bg-muted/30 p-1 text-sm">
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab("info")}
-                      className={`px-3 py-1.5 rounded-md ${activeTab === "info" ? "bg-background text-foreground" : "text-muted-foreground"}`}
-                    >
-                      {t.tabs[0]}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab("files")}
-                      className={`px-3 py-1.5 rounded-md ${activeTab === "files" ? "bg-background text-foreground" : "text-muted-foreground"}`}
-                    >
-                      {t.tabs[1]}
-                    </button>
-                  </div>
-
-                  {activeTab === "info" ? (
+                <div className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)]">
+                  <section className="rounded-xl border border-border bg-background/70 p-5">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-semibold">{t.tabs[0]}</p>
+                        <p className="text-xs text-muted-foreground">{t.step0Desc}</p>
+                      </div>
+                      <Store size={18} className="text-primary" />
+                    </div>
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="bn">{t.labels.title}</Label>
@@ -1104,8 +1093,8 @@ const Agent = () => {
                       <div className="rounded-xl border border-border overflow-hidden">
                         <div className="grid grid-cols-12 px-4 py-3 text-xs uppercase text-muted-foreground border-b border-border">
                           <span className="col-span-3">{t.labels.title}</span>
-                          <span className="col-span-5">{t.labels.description}</span>
-                          <span className="col-span-3">{t.labels.created}</span>
+                          <span className="col-span-6">{t.labels.description}</span>
+                          <span className="col-span-2">{t.labels.created}</span>
                           <span className="col-span-1 text-right">{t.labels.actions}</span>
                         </div>
                         {infoEntries.length === 0 ? (
@@ -1113,9 +1102,9 @@ const Agent = () => {
                         ) : (
                           infoEntries.map((entry) => (
                             <div key={entry.id} className="grid grid-cols-12 px-4 py-3 text-sm border-b border-border last:border-b-0">
-                              <span className="col-span-3">{entry.name}</span>
-                              <span className="col-span-5 text-muted-foreground">{entry.description}</span>
-                              <span className="col-span-3 text-muted-foreground">{formatDate(entry.created_at)}</span>
+                              <span className="col-span-3 font-medium break-words">{entry.name}</span>
+                              <span className="col-span-6 text-muted-foreground break-words">{entry.description}</span>
+                              <span className="col-span-2 text-muted-foreground">{formatDate(entry.created_at)}</span>
                               <div className="col-span-1 flex justify-end">
                                 <Button variant="ghost" size="icon" onClick={() => void deleteBusinessInformation(entry.id)}>
                                   <Trash2 size={16} />
@@ -1126,7 +1115,16 @@ const Agent = () => {
                         )}
                       </div>
                     </div>
-                  ) : (
+                  </section>
+
+                  <section className="rounded-xl border border-border bg-background/70 p-5">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-semibold">{t.tabs[1]}</p>
+                        <p className="text-xs text-muted-foreground">{t.uploadHelp}</p>
+                      </div>
+                      <FileText size={18} className="text-primary" />
+                    </div>
                     <div className="space-y-4">
                       <div className="rounded-xl border border-dashed border-border p-5 text-center bg-muted/30">
                         <FileText className="mx-auto text-muted-foreground mb-2" />
@@ -1178,7 +1176,7 @@ const Agent = () => {
                         )}
                       </div>
                     </div>
-                  )}
+                  </section>
                 </div>
 
                 <div className="flex justify-end mt-8">
@@ -1202,24 +1200,34 @@ const Agent = () => {
                 </div>
                 <p className="text-muted-foreground mb-6">{t.step2Desc}</p>
 
-                <div className="mb-6 grid md:grid-cols-2 gap-3">
-                  <div className="rounded-xl border border-border bg-muted/30 p-4">
-                    <p className="text-sm font-semibold mb-1 flex items-center gap-2"><Smartphone size={14} className="text-primary"/> {t.personal}</p>
-                    <p className="text-xs text-muted-foreground">{t.personalDesc}</p>
-                  </div>
-                  <div className="rounded-xl border border-border bg-muted/30 p-4">
-                    <p className="text-sm font-semibold mb-1 flex items-center gap-2"><MessageCircle size={14} className="text-primary"/> {t.businessNumber}</p>
-                    <p className="text-xs text-muted-foreground">{t.businessNumberDesc}</p>
-                  </div>
-                </div>
+                <div className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(420px,1.1fr)]">
+                  <section className="space-y-3">
+                    <div className="rounded-xl border border-border bg-muted/30 p-5">
+                      <p className="text-sm font-semibold mb-1 flex items-center gap-2"><Smartphone size={14} className="text-primary"/> {t.personal}</p>
+                      <p className="text-xs text-muted-foreground">{t.personalDesc}</p>
+                    </div>
+                    <div className="rounded-xl border border-border bg-muted/30 p-5">
+                      <p className="text-sm font-semibold mb-1 flex items-center gap-2"><MessageCircle size={14} className="text-primary"/> {t.businessNumber}</p>
+                      <p className="text-xs text-muted-foreground">{t.businessNumberDesc}</p>
+                    </div>
+                    <div className="rounded-xl border border-border bg-background/70 p-5">
+                      <p className="text-sm font-semibold mb-2 flex items-center gap-2">
+                        <QrCode size={15} className="text-primary" /> {t.nav[3]}
+                      </p>
+                      <p className="text-sm text-muted-foreground">{t.step2Desc}</p>
+                    </div>
+                  </section>
 
-                {/* QR panel is mounted only when the WhatsApp step is active */}
-                <WhatsAppQRPanel
-                  onConnected={() => {
-                    setWhatsappConnected(true);
-                    toast.success("WhatsApp connected!");
-                  }}
-                />
+                  <section className="rounded-xl border border-border bg-background/70 p-5">
+                    {/* QR panel is mounted only when the WhatsApp step is active */}
+                    <WhatsAppQRPanel
+                      onConnected={() => {
+                        setWhatsappConnected(true);
+                        toast.success("WhatsApp connected!");
+                      }}
+                    />
+                  </section>
+                </div>
 
                 <div className="flex justify-between mt-8">
                   <Button variant="ghost" onClick={goBack}>
@@ -1245,9 +1253,11 @@ const Agent = () => {
                 </div>
                 <p className="text-muted-foreground mb-6">{t.step1Desc}</p>
 
+                <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(420px,0.9fr)]">
+                  <section className="space-y-6">
                 {/* Templates first */}
                 {(botEntries.length === 0 || editingBotId) && (
-                <div className="mb-6 rounded-xl border border-border p-5">
+                <div className="rounded-xl border border-border p-5">
                   <p className="font-semibold mb-1">{t.templatesTitle}</p>
                   <p className="text-sm text-muted-foreground mb-4">{t.templatesDesc}</p>
                   <div className="grid gap-3 md:grid-cols-2">
@@ -1282,7 +1292,7 @@ const Agent = () => {
                   <Switch checked={aiOn} onCheckedChange={setAiOn} className="scale-125" />
                 </div>
 
-                <div className="mt-6 rounded-xl border border-border bg-muted/30 p-5 space-y-4">
+                <div className="rounded-xl border border-border bg-muted/30 p-5 space-y-4">
                   <div className="flex items-center justify-between">
                     <p className="font-semibold">{editingBotId ? t.editBot : botEntries.length >= 1 ? t.yourBot : t.createBot}</p>
                     {editingBotId && (
@@ -1339,7 +1349,7 @@ const Agent = () => {
                   )}
                 </div>
 
-	                <div className="mt-6 rounded-xl border border-border overflow-hidden">
+		                <div className="rounded-xl border border-border overflow-hidden">
 	                  <div className="grid grid-cols-12 px-4 py-3 text-xs uppercase text-muted-foreground border-b border-border">
                     <span className="col-span-2">{t.table.bot}</span>
                     <span className="col-span-6">{t.table.prompt}</span>
@@ -1367,7 +1377,9 @@ const Agent = () => {
 	                  )}
 	                </div>
 
-	                <div className="mt-6 rounded-xl border border-border bg-background/70 overflow-hidden">
+                  </section>
+
+		                <section className="rounded-xl border border-border bg-background/70 overflow-hidden xl:sticky xl:top-8 xl:self-start">
 	                  <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between">
 	                    <div className="flex items-center gap-3">
 	                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -1390,7 +1402,7 @@ const Agent = () => {
 	                    </div>
 	                  </div>
 
-	                  <div className="h-[360px] overflow-y-auto bg-muted/20 p-4">
+		                  <div className="h-[520px] overflow-y-auto bg-muted/20 p-4">
 	                    {testMessages.length === 0 ? (
 	                      <div className="flex h-full flex-col items-center justify-center text-center">
 	                        <MessageCircle className="mb-3 text-muted-foreground" size={30} />
@@ -1466,7 +1478,8 @@ const Agent = () => {
 	                      </Button>
 	                    </div>
 	                  </div>
-	                </div>
+		                </section>
+                </div>
 
 	                <div className="flex justify-between mt-8">
                   <Button variant="ghost" onClick={goBack}>
@@ -1497,7 +1510,9 @@ const Agent = () => {
                   </p>
                 </div>
 
-                {!setupComplete && (
+                <div className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
+                  <aside className="space-y-4 xl:sticky xl:top-8 xl:self-start">
+                {!setupComplete ? (
                   <div className="rounded-2xl border border-border bg-card p-6 space-y-3">
                     <div className="flex items-center justify-between">
                       <p className="font-semibold">{t.checklistTitle}</p>
@@ -1531,8 +1546,31 @@ const Agent = () => {
                       {t.resume} <ArrowRight size={16} />
                     </Button>
                   </div>
+                ) : (
+                  <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <p className="font-semibold">{t.checklistTitle}</p>
+                      <span className="text-xs text-muted-foreground">{checklistDone}/3</span>
+                    </div>
+                    {checklist.map((c) => (
+                      <button
+                        key={c.label}
+                        type="button"
+                        onClick={() => setStep(c.step)}
+                        className="w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/40 transition-colors text-left"
+                      >
+                        <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center flex-shrink-0">
+                          <Check size={14} />
+                        </div>
+                        <span className="flex-1 text-sm text-muted-foreground">{c.label}</span>
+                        <ArrowRight size={14} className="text-muted-foreground" />
+                      </button>
+                    ))}
+                  </div>
                 )}
+                  </aside>
 
+                  <section className="space-y-6">
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   <div className="rounded-2xl border border-border bg-card p-5">
                     <div className="w-12 h-12 rounded-full bg-blue-500/15 text-blue-600 flex items-center justify-center mb-4">
@@ -1597,6 +1635,8 @@ const Agent = () => {
                       <p className="text-sm text-muted-foreground mt-2">{t.quickCards[2][1]}</p>
                     </button>
                   </div>
+                </div>
+                  </section>
                 </div>
               </motion.div>
             )}
