@@ -117,11 +117,6 @@ function extractTextContent(choice: NvidiaChoice) {
     if (text) return text;
   }
   
-  // If content is null/empty but reasoning exists, use that
-  if (!messageContent && message.reasoning) {
-    return message.reasoning.trim();
-  }
-  
   // Fallback to text field if available
   return choice.text?.trim() ?? "";
 }

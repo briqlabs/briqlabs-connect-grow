@@ -2,7 +2,7 @@ import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { evaluateFaithfulness, logEvaluation } from "./evaluation.ts";
 import { generateTextWithUsage, calculateApiCost } from "./llm.ts";
 import { getConversationMemory, storeChatMessage } from "./memory.ts";
-import { buildRagPrompt, fallbackAnswer } from "./prompt-builder.ts";
+import { buildRagPrompt, buildGreetingPrompt, isGreeting, fallbackAnswer } from "./prompt-builder.ts";
 import { retrieveKnowledgeChunks } from "./vector-search.ts";
 import { sendEvolutionReply } from "./whatsapp.ts";
 import { 
@@ -47,6 +47,53 @@ export async function processRagQuery(db: SupabaseClient, input: RagQueryInput) 
 
     const memory = await getConversationMemory(db, businessId, customerPhone);
     console.log("Memory retrieved", { memorySize: memory.length });
+
+    // Check if message is a greeting
+    const messageIsGreeting = isGreeting(message);
+    if (messageIsGreeting) {
+      console.log("Detected greeting message, generating greeting response");
+      
+      try {
+        const greetingPrompt = buildGreetingPrompt({ question: message, memory });
+        const result = await generateTextWithUsage(greetingPrompt, { temperature: 0.3, maxOutputTokens: 256 });
+        const answer = result.text;
+        
+        await storeChatMessage(db, businessId, customerPhone, "assistant", answer);
+        
+        if (input.send_whatsapp && input.whatsapp_instance) {
+          await sendEvolutionReply(input.whatsapp_instance, customerPhone, answer);
+        }
+
+        const latencyMs = Date.now() - startedAt;
+        
+        // Log to Supabase
+        await logEvaluation(db, {
+          businessId,
+          customerPhone,
+          question: message,
+          chunks: [],
+          answer,
+          faithfulnessScore: 1,
+          retrievalScore: 0,
+          latencyMs,
+        });
+
+        return {
+          answer,
+          retrieved_chunks: [],
+          retrieval_score: 0,
+          faithfulness_score: 1,
+          latency_ms: latencyMs,
+          sent_whatsapp: Boolean(input.send_whatsapp && input.whatsapp_instance),
+        };
+      } catch (error) {
+        console.error("Greeting generation failed", { 
+          error: (error as Error).message,
+          stack: (error as Error).stack?.slice(0, 200),
+        });
+        // Fall through to RAG pipeline if greeting generation fails
+      }
+    }
 
     const { chunks, retrievalScore } = await retrieveKnowledgeChunks(db, businessId, message, {
       matchCount: input.match_count ?? 5,
