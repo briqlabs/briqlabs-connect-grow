@@ -12,6 +12,49 @@ If the answer is not found in the context, say:
 Do not hallucinate.
 Do not invent pricing, policies, timings, or services.`;
 
+const GREETING_SYSTEM_PROMPT = `You are Briqlabs AI assistant for this business.
+
+The customer has sent a greeting. Respond warmly and briefly with a greeting back.
+Then offer help - ask how you can assist them today or invite them to ask about the business.
+
+Keep the response concise and friendly (1-2 sentences max).`;
+
+export function isGreeting(message: string): boolean {
+  const lowerMessage = message.toLowerCase().trim();
+  
+  // Common greeting patterns
+  const greetingPatterns = [
+    /^(hi|hello|hey|greetings|good morning|good afternoon|good evening|what's up|yo|hey there)[\s!?]*$/,
+    /^(hi|hello|hey)\s+there[\s!?]*$/,
+    /^(howdy|namaste|salaam)[\s!?]*$/,
+  ];
+  
+  return greetingPatterns.some(pattern => pattern.test(lowerMessage));
+}
+
+export function buildGreetingPrompt(params: {
+  question: string;
+  memory: ChatMessage[];
+}) {
+  const prompt = [
+    GREETING_SYSTEM_PROMPT,
+    "",
+    "RECENT CONVERSATION:",
+    formatMemory(params.memory) || "No previous conversation.",
+    "",
+    `CUSTOMER MESSAGE: ${params.question}`,
+    "",
+    "Respond warmly and offer assistance.",
+  ].join("\n");
+
+  console.log("Greeting prompt built", {
+    promptLength: prompt.length,
+    memorySize: params.memory.length,
+  });
+
+  return prompt;
+}
+
 export function buildRagPrompt(params: {
   question: string;
   chunks: RetrievedChunk[];
