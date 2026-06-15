@@ -2,7 +2,7 @@ import type { ChatMessage } from "./memory.ts";
 import { formatMemory } from "./memory.ts";
 import type { RetrievedChunk } from "./vector-search.ts";
 
-const SYSTEM_PROMPT = `You are Briqlabs AI assistant for this business.
+const DEFAULT_SYSTEM_PROMPT = `You are Briqlabs AI assistant for this business.
 
 Answer ONLY using the provided business context.
 
@@ -12,7 +12,7 @@ If the answer is not found in the context, say:
 Do not hallucinate.
 Do not invent pricing, policies, timings, or services.`;
 
-const GREETING_SYSTEM_PROMPT = `You are Briqlabs AI assistant for this business.
+const DEFAULT_GREETING_SYSTEM_PROMPT = `You are Briqlabs AI assistant for this business.
 
 The customer has sent a greeting. Respond warmly and briefly with a greeting back.
 Then offer help - ask how you can assist them today or invite them to ask about the business.
@@ -35,9 +35,14 @@ export function isGreeting(message: string): boolean {
 export function buildGreetingPrompt(params: {
   question: string;
   memory: ChatMessage[];
+  businessPrompt?: string;
 }) {
+  const systemPrompt = params.businessPrompt
+    ? `${params.businessPrompt}\n\nIMPORTANT: The customer has sent a greeting. Respond warmly and briefly, then offer to help. Keep it concise (1-2 sentences max).`
+    : DEFAULT_GREETING_SYSTEM_PROMPT;
+
   const prompt = [
-    GREETING_SYSTEM_PROMPT,
+    systemPrompt,
     "",
     "RECENT CONVERSATION:",
     formatMemory(params.memory) || "No previous conversation.",
@@ -50,6 +55,7 @@ export function buildGreetingPrompt(params: {
   console.log("Greeting prompt built", {
     promptLength: prompt.length,
     memorySize: params.memory.length,
+    hasBusinessPrompt: Boolean(params.businessPrompt),
   });
 
   return prompt;
@@ -59,6 +65,7 @@ export function buildRagPrompt(params: {
   question: string;
   chunks: RetrievedChunk[];
   memory: ChatMessage[];
+  businessPrompt?: string;
 }) {
   const context = params.chunks
     .map((chunk, index) => {
@@ -67,8 +74,10 @@ export function buildRagPrompt(params: {
     })
     .join("\n\n");
 
+  const systemPrompt = params.businessPrompt ?? DEFAULT_SYSTEM_PROMPT;
+
   const prompt = [
-    SYSTEM_PROMPT,
+    systemPrompt,
     "",
     "BUSINESS CONTEXT:",
     context || "No matching business context was found.",
@@ -86,6 +95,7 @@ export function buildRagPrompt(params: {
     contextLength: context.length,
     chunksCount: params.chunks.length,
     memorySize: params.memory.length,
+    hasBusinessPrompt: Boolean(params.businessPrompt),
   });
 
   return prompt;
