@@ -27,6 +27,34 @@ export type RagQueryInput = {
   match_threshold?: number;
 };
 
+async function getBusinessBotPrompt(db: SupabaseClient, businessId: string): Promise<string | null> {
+  try {
+    const { data, error } = await db
+      .from("ai_bots")
+      .select("prompt")
+      .eq("user_id", businessId)
+      .eq("is_active", true)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error) {
+      if (error.code === "PGRST116") {
+        // No rows returned - this is expected if no bot is configured
+        console.log("No active AI bot configuration found for business");
+        return null;
+      }
+      throw error;
+    }
+
+    console.log("Retrieved business bot prompt");
+    return data?.prompt ?? null;
+  } catch (error) {
+    console.warn("Failed to retrieve business bot prompt", { error: (error as Error).message });
+    return null;
+  }
+}
+
 export async function processRagQuery(db: SupabaseClient, input: RagQueryInput) {
   const startedAt = Date.now();
   const businessId = input.business_id;
@@ -48,13 +76,17 @@ export async function processRagQuery(db: SupabaseClient, input: RagQueryInput) 
     const memory = await getConversationMemory(db, businessId, customerPhone);
     console.log("Memory retrieved", { memorySize: memory.length });
 
+    // Fetch business's configured AI bot prompt
+    const businessPrompt = await getBusinessBotPrompt(db, businessId);
+    console.log("Business bot prompt retrieved", { hasPrompt: Boolean(businessPrompt) });
+
     // Check if message is a greeting
     const messageIsGreeting = isGreeting(message);
     if (messageIsGreeting) {
       console.log("Detected greeting message, generating greeting response");
       
       try {
-        const greetingPrompt = buildGreetingPrompt({ question: message, memory });
+        const greetingPrompt = buildGreetingPrompt({ question: message, memory, businessPrompt });
         const result = await generateTextWithUsage(greetingPrompt, { temperature: 0.3, maxOutputTokens: 256 });
         const answer = result.text;
         
@@ -160,7 +192,7 @@ export async function processRagQuery(db: SupabaseClient, input: RagQueryInput) 
         }
 
         console.log("Starting text generation");
-        const prompt = buildRagPrompt({ question: message, chunks, memory });
+        const prompt = buildRagPrompt({ question: message, chunks, memory, businessPrompt });
         const result = await generateTextWithUsage(prompt, { temperature: 0.15, maxOutputTokens: 512 });
         answer = result.text;
         model = result.model;

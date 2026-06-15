@@ -701,7 +701,10 @@ const Agent = () => {
   };
 
   const applyPersonality = (suffix: string) => {
-    setBotPrompt((prev) => (prev.includes(suffix.trim()) ? prev : (prev.trim() + suffix)));
+    setBotPrompt((prev) => {
+      const trimmed = prev.trim();
+      return trimmed.includes(suffix.trim()) ? trimmed : (trimmed + "\n" + suffix);
+    });
   };
 
   const applyVertical = (id: "coaching" | "realestate" | "clinic" | "interior") => {
@@ -1336,7 +1339,7 @@ const Agent = () => {
                   ) : (
                     botEntries.map((bot) => (
                       <div key={bot.id} className="grid grid-cols-12 px-4 py-3 text-sm border-b border-border last:border-b-0">
-                        <span className="col-span-10 text-muted-foreground break-words">{bot.prompt}</span>
+                        <span className="col-span-10 text-muted-foreground break-words whitespace-pre-wrap">{bot.prompt}</span>
                         <div className="col-span-2 flex justify-end">
                           <Button variant="ghost" size="icon" onClick={() => editBot(bot.id)}>
                             <Pencil size={16} />
