@@ -1285,18 +1285,17 @@ const Agent = () => {
                   <Switch checked={aiOn} onCheckedChange={setAiOn} className="scale-125" />
                 </div>
 
+                {editingBotId && (
                 <div className="rounded-xl border border-border bg-muted/30 p-5 space-y-4">
                   <div className="flex items-center justify-between">
-                    <p className="font-semibold">{editingBotId ? t.editBot : t.createBot}</p>
-                    {editingBotId && (
-                      <Button type="button" size="sm" variant="ghost" onClick={resetBotForm}>
-                        {t.cancelEdit}
-                      </Button>
-                    )}
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-primary/10 text-primary">
+                      <Pencil size={18} />
+                    </div>
+                    <Button type="button" size="sm" variant="ghost" onClick={resetBotForm}>
+                      {t.cancelEdit}
+                    </Button>
                   </div>
 
-                  {(botEntries.length === 0 || editingBotId) && (
-                  <>
                   <div className="space-y-2">
                     <Label htmlFor="bot-prompt">{t.botPrompt}</Label>
                     <Textarea
@@ -1322,12 +1321,11 @@ const Agent = () => {
                   </div>
                   <div className="flex gap-2">
                     <Button type="button" onClick={saveBot} disabled={saving}>
-                      {editingBotId ? t.updateBot : t.createBot}
+                      {t.updateBot}
                     </Button>
                   </div>
-                  </>
-                  )}
                 </div>
+                )}
 
 		                <div className="rounded-xl border border-border overflow-hidden">
 	                  <div className="grid grid-cols-12 px-4 py-3 text-xs uppercase text-muted-foreground border-b border-border">
