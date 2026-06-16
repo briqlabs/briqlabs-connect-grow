@@ -65,8 +65,16 @@ async function upsertInstance(
 
 // ── Evolution API calls ───────────────────────────────────────────────────────
 
+/** Build a proper URL, avoiding double slashes. */
+function buildUrl(path: string): string {
+  const baseUrl = EVOLUTION_URL.endsWith("/") ? EVOLUTION_URL.slice(0, -1) : EVOLUTION_URL;
+  const pathUrl = path.startsWith("/") ? path : `/${path}`;
+  return `${baseUrl}${pathUrl}`;
+}
+
 async function evoPost(path: string, body?: unknown) {
-  const r = await fetch(`${EVOLUTION_URL}${path}`, {
+  const url = buildUrl(path);
+  const r = await fetch(url, {
     method:  "POST",
     headers: evolutionHeaders(),
     body:    body ? JSON.stringify(body) : undefined,
@@ -79,7 +87,8 @@ async function evoPost(path: string, body?: unknown) {
 }
 
 async function evoGet(path: string) {
-  const r = await fetch(`${EVOLUTION_URL}${path}`, {
+  const url = buildUrl(path);
+  const r = await fetch(url, {
     method:  "GET",
     headers: evolutionHeaders(),
   });
@@ -91,7 +100,8 @@ async function evoGet(path: string) {
 }
 
 async function evoDelete(path: string) {
-  const r = await fetch(`${EVOLUTION_URL}${path}`, {
+  const url = buildUrl(path);
+  const r = await fetch(url, {
     method:  "DELETE",
     headers: evolutionHeaders(),
   });
