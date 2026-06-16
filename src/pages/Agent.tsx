@@ -1285,15 +1285,17 @@ const Agent = () => {
                   <Switch checked={aiOn} onCheckedChange={setAiOn} className="scale-125" />
                 </div>
 
-                {editingBotId && (
+                {(botEntries.length === 0 || editingBotId) && (
                 <div className="rounded-xl border border-border bg-muted/30 p-5 space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-primary/10 text-primary">
                       <Pencil size={18} />
                     </div>
-                    <Button type="button" size="sm" variant="ghost" onClick={resetBotForm}>
-                      {t.cancelEdit}
-                    </Button>
+                    {editingBotId && (
+                      <Button type="button" size="sm" variant="ghost" onClick={resetBotForm}>
+                        {t.cancelEdit}
+                      </Button>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -1321,25 +1323,27 @@ const Agent = () => {
                   </div>
                   <div className="flex gap-2">
                     <Button type="button" onClick={saveBot} disabled={saving}>
-                      {t.updateBot}
+                      {editingBotId ? t.updateBot : t.createBot}
                     </Button>
                   </div>
                 </div>
                 )}
 
 		                <div className="rounded-xl border border-border overflow-hidden">
-	                  <div className="grid grid-cols-12 px-4 py-3 text-xs uppercase text-muted-foreground border-b border-border">
-                    <span className="col-span-10">{t.table.prompt}</span>
-                    <span className="col-span-2 text-right">{t.labels.actions}</span>
+	                  <div className="grid grid-cols-12 px-4 py-3 text-xs uppercase text-muted-foreground border-b border-border items-center">
+                    <span className="col-span-11">{t.table.prompt}</span>
+                    <div className="col-span-1 flex justify-center">
+                      <Pencil size={14} />
+                    </div>
                   </div>
                   {botEntries.length === 0 ? (
                     <p className="p-4 text-sm text-muted-foreground">{t.table.noBots}</p>
                   ) : (
                     botEntries.map((bot) => (
-                      <div key={bot.id} className="grid grid-cols-12 px-4 py-3 text-sm border-b border-border last:border-b-0">
-                        <span className="col-span-10 text-muted-foreground break-words whitespace-pre-wrap">{bot.prompt}</span>
-                        <div className="col-span-2 flex justify-end">
-                          <Button variant="ghost" size="icon" onClick={() => editBot(bot.id)}>
+                      <div key={bot.id} className="grid grid-cols-12 px-4 py-3 text-sm border-b border-border last:border-b-0 items-center">
+                        <span className="col-span-11 text-muted-foreground break-words whitespace-pre-wrap">{bot.prompt}</span>
+                        <div className="col-span-1 flex justify-center">
+                          <Button variant="ghost" size="icon" onClick={() => editBot(bot.id)} className="h-8 w-8">
                             <Pencil size={16} />
                           </Button>
                         </div>
