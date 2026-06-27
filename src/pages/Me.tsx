@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ArrowRight, BrainCircuit, Github, Linkedin, MessageCircle, Sparkles } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -6,15 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import LeadFormDialog from "@/components/LeadFormDialog";
-import WhatsAppDemoDialog from "@/components/WhatsAppDemoDialog";
 import type { LeadFormOpener } from "@/pages/Index";
 
 const Me = () => {
+  const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState("Get Started");
-  const [whatsappDemoOpen, setWhatsappDemoOpen] = useState(false);
 
   const openForm: LeadFormOpener = (title = "Get Started") => {
+    if (title === "Start Free Trial") {
+      navigate("/agent");
+      return;
+    }
     setDialogTitle(title);
     setDialogOpen(true);
   };
@@ -38,9 +42,11 @@ const Me = () => {
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
-                <Button variant="hero" onClick={() => setWhatsappDemoOpen(true)}>
-                  See WhatsApp demo
-                  <MessageCircle className="ml-2 h-4 w-4" />
+                <Button variant="hero" asChild>
+                  <a href="https://briqlabs.com">
+                    See WhatsApp demo
+                    <MessageCircle className="ml-2 h-4 w-4" />
+                  </a>
                 </Button>
                 <Button variant="outline" onClick={() => openForm("Start Free Trial")}>
                   Start a project
@@ -50,7 +56,7 @@ const Me = () => {
 
               <div className="mt-8 flex flex-wrap gap-3">
                 <a
-                  href="https://github.com/harishkumar"
+                  href="https://github.com/briqlabs"
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary/40 hover:text-primary"
@@ -136,7 +142,6 @@ const Me = () => {
 
       <Footer />
       <LeadFormDialog open={dialogOpen} onOpenChange={setDialogOpen} title={dialogTitle} />
-      <WhatsAppDemoDialog open={whatsappDemoOpen} onOpenChange={setWhatsappDemoOpen} onGetStarted={() => openForm("Start Free Trial")} />
     </div>
   );
 };
