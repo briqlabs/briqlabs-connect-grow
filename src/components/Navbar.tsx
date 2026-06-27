@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import type { LeadFormOpener } from "@/pages/Index";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -12,6 +12,7 @@ const copy = {
   hinglish: {
     useCases: "Use cases",
     faq: "FAQ",
+    aboutMe: "About me",
     voiceSoon: "Voice AI · soon",
     cta: "Start free trial",
     languageHint: "Choose your language",
@@ -20,6 +21,7 @@ const copy = {
   en: {
     useCases: "Use cases",
     faq: "FAQ",
+    aboutMe: "About me",
     voiceSoon: "Voice AI · soon",
     cta: "Start free trial",
     languageHint: "Choose your language",
@@ -28,6 +30,7 @@ const copy = {
   hi: {
     useCases: "उपयोग",
     faq: "सवाल-जवाब",
+    aboutMe: "मेरे बारे में",
     voiceSoon: "Voice AI · जल्द",
     cta: "फ्री ट्रायल शुरू करें",
     languageHint: "अपनी भाषा चुनें",
@@ -65,6 +68,7 @@ const Navbar = ({ openForm }: { openForm: LeadFormOpener }) => {
         <div className="hidden md:flex items-center gap-8">
           <a href="#use-cases" className="text-sm text-muted-foreground hover:text-foreground transition-colors">{t.useCases}</a>
           <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">{t.faq}</a>
+          <Link to="/me" className="text-sm text-muted-foreground hover:text-foreground transition-colors">{t.aboutMe}</Link>
           <span className="text-xs px-2 py-0.5 rounded-full bg-accent/15 text-accent">{t.voiceSoon}</span>
         </div>
 
@@ -114,6 +118,7 @@ const Navbar = ({ openForm }: { openForm: LeadFormOpener }) => {
             <div className="flex flex-col gap-4 p-6">
               <a href="#use-cases" className="text-sm text-muted-foreground hover:text-foreground">{t.useCases}</a>
               <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground">{t.faq}</a>
+              <Link to="/me" onClick={() => setMobileOpen(false)} className="text-sm text-muted-foreground hover:text-foreground">{t.aboutMe}</Link>
               <div className="flex items-center gap-3">
                 <LanguageToggle />
                 <ThemeToggle />
