@@ -71,8 +71,7 @@ const pageCopy = {
     titleStart: "Dental clinic ka WhatsApp banaiye",
     titleHighlight: "24x7 front desk",
     body: "New patient enquiries, appointment booking, treatment FAQs, reminders, and follow-ups automatically handle hote hain, so your team can focus on patients in the chair.",
-    cta: "Start 14-day free trial",
-    secondaryCta: "Book a live demo",
+    cta: "Start for Free",
     noCard: "No credit card",
     languages: "Hindi · English · Hinglish",
     response: "Replies in under 5 seconds",
@@ -115,8 +114,7 @@ const pageCopy = {
     titleStart: "Turn your dental clinic WhatsApp into a",
     titleHighlight: "24/7 front desk",
     body: "New patient enquiries, appointment booking, treatment FAQs, reminders, and follow-ups run automatically, so your team can focus on patients in the chair.",
-    cta: "Start 14-day free trial",
-    secondaryCta: "Book a live demo",
+    cta: "Start for Free",
     noCard: "No credit card",
     languages: "Hindi · English · Hinglish",
     response: "Replies in under 5 seconds",
@@ -159,8 +157,7 @@ const pageCopy = {
     titleStart: "अपने dental clinic WhatsApp को बनाइए",
     titleHighlight: "24x7 front desk",
     body: "New patient enquiries, appointment booking, treatment FAQs, reminders और follow-ups automatic चलते हैं, ताकि आपकी team patients पर focus कर सके.",
-    cta: "14 दिन का फ्री ट्रायल शुरू करें",
-    secondaryCta: "Live demo book करें",
+    cta: "Free में शुरू करें",
     noCard: "क्रेडिट कार्ड नहीं चाहिए",
     languages: "हिन्दी · English · Hinglish",
     response: "5 seconds से कम में reply",
@@ -319,9 +316,6 @@ export default function DentalClinic() {
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-8">
                 <Button variant="hero" size="lg" className="text-base px-7 py-6" onClick={() => openForm("Start Free Trial")}>
                   {t.cta} <ArrowRight size={18} />
-                </Button>
-                <Button variant="outline" size="lg" className="text-base px-7 py-6" onClick={() => openForm("Dental Clinic Demo")}>
-                  {t.secondaryCta}
                 </Button>
               </div>
 
