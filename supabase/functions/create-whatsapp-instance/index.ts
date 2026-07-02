@@ -112,18 +112,8 @@ async function evoDelete(path: string) {
   return r.json();
 }
 
-function resolveWebhookUrl(): string | null {
-  const fromEnv = Deno.env.get("SUPABASE_WEBHOOK_URL") ?? Deno.env.get("WHATSAPP_WEBHOOK_URL");
-  if (fromEnv) return fromEnv.trim();
-
-  const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  if (!supabaseUrl) return null;
-
-  return `${supabaseUrl.replace(/\/+$/, "")}/functions/v1/whatsapp-webhook`;
-}
-
 async function configureWebhook(instanceName: string) {
-  const webhookUrl = resolveWebhookUrl();
+  const webhookUrl = Deno.env.get("SUPABASE_WEBHOOK_URL") ?? Deno.env.get("WHATSAPP_WEBHOOK_URL");
   if (!webhookUrl) {
     return;
   }
@@ -131,30 +121,17 @@ async function configureWebhook(instanceName: string) {
   const body = {
     enabled: true,
     url: webhookUrl,
-    events: ["MESSAGES_UPSERT", "QRCODE_UPDATED", "CONNECTION_UPDATE", "STATE_CHANGE"],
+    events: ["MESSAGES_UPSERT"],
     headers: {},
     base64: false,
   };
 
-  try {
-    await evoPost(`/webhook/set/${instanceName}`, body);
-  } catch (err) {
-    const fallbackBody = {
-      enabled: true,
-      url: webhookUrl,
-      events: ["MESSAGES_UPSERT"],
-      headers: {},
-    };
-    await evoPost(`/webhook/set/${instanceName}`, fallbackBody);
-    if (err instanceof Error) {
-      console.warn("Evolution webhook primary payload failed; fallback succeeded", err.message);
-    }
-  }
+  await evoPost(`/webhook/set/${instanceName}`, body);
 }
 
 async function handleWebhookHealthCheck(userId: string) {
   const name = instanceName(userId);
-  const webhookUrl = resolveWebhookUrl();
+  const webhookUrl = Deno.env.get("SUPABASE_WEBHOOK_URL") ?? Deno.env.get("WHATSAPP_WEBHOOK_URL") ?? null;
 
   try {
     const current = await evoGet(`/webhook/find/${name}`);
