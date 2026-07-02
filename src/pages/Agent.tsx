@@ -307,6 +307,14 @@ function WhatsAppQRPanel({ onConnected }: { onConnected: () => void }) {
             </div>
           )}
 
+          {/* Reconnecting state */}
+          {status === "reconnecting" && (
+            <div className="flex flex-col items-center gap-3 text-muted-foreground">
+              <Loader2 size={40} className="animate-spin text-primary" />
+              <p className="text-sm">Reconnecting to WhatsApp…</p>
+            </div>
+          )}
+
           {/* QR ready — show the actual image */}
           {status === "qr_ready" && qrBase64 && (
             <img

@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeEvolutionStatus } from "@/lib/whatsapp-status";
 
-type ConnectionStatus = "idle" | "loading" | "qr_ready" | "connected" | "error";
+type ConnectionStatus = "idle" | "loading" | "qr_ready" | "connected" | "reconnecting" | "error";
 
 interface UseWhatsAppQRResult {
   status: ConnectionStatus;
@@ -86,18 +87,25 @@ export function useWhatsAppQR(): UseWhatsAppQRResult {
     pollRef.current = setInterval(async () => {
       try {
         const data = await callEdge("get_status");
-        const isConnected = data.connected as boolean;
-        const statusFromApi = data.status as string;
+        const normalized = normalizeEvolutionStatus(data.raw ?? data.status);
 
-        if (isConnected) {
+        if (normalized.connected) {
           setConnected(true);
           setStatus("connected");
           stopPolling();
-        } else if (statusFromApi === "disconnected") {
-          stopPolling();
-          setStatus("error");
-          setError("WhatsApp disconnected. Please refresh the QR code.");
+          return;
         }
+
+        if (normalized.status === "reconnecting") {
+          setConnected(false);
+          setStatus("reconnecting");
+          setError("WhatsApp is reconnecting. The QR will be refreshed automatically.");
+          return;
+        }
+
+        setConnected(false);
+        setStatus("qr_ready");
+        setError(null);
       } catch {
         // transient network issue, keep polling
       }
