@@ -124,6 +124,34 @@ async function evoDelete(path: string) {
 async function handleCreateInstance(db: ReturnType<typeof createClient>, userId: string) {
   const name = instanceName(userId);
 
+  try {
+    const statusData = await evoGet(`/instance/connectionState/${name}`);
+    const raw: string = (statusData?.instance?.state ?? statusData?.state ?? "close").toString().trim().toLowerCase();
+    const connected = raw === "open";
+    const status = connected
+      ? "connected"
+      : raw === "connecting" || raw === "qr" || raw === "qrcode"
+        ? "qr_ready"
+        : "reconnecting";
+
+    if (raw === "open" || raw === "connecting" || raw === "qr" || raw === "qrcode" || raw === "close") {
+      try {
+        const qrData = await evoGet(`/instance/connect/${name}`);
+        const qrBase64: string | undefined =
+          qrData?.base64 ??
+          qrData?.qrcode?.base64 ??
+          qrData?.qrCode?.base64;
+
+        await upsertInstance(db, userId, name, status === "connected" ? "connected" : status === "qr_ready" ? "qr_ready" : "reconnecting");
+        return { instanceName: name, qrBase64, reused: true };
+      } catch {
+        // fall through to create a fresh instance if the existing one cannot be queried
+      }
+    }
+  } catch {
+    // no existing instance found; continue with creation below
+  }
+
   // Try to delete any stale instance first (ignore errors — may not exist yet).
   try {
     await evoDelete(`/instance/delete/${name}`);
@@ -145,7 +173,7 @@ async function handleCreateInstance(db: ReturnType<typeof createClient>, userId:
 
   await upsertInstance(db, userId, name, "qr_ready");
 
-  return { instanceName: name, qrBase64 };
+  return { instanceName: name, qrBase64, reused: false };
 }
 
 /**

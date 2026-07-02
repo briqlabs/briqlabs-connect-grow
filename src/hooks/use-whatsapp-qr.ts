@@ -116,6 +116,37 @@ export function useWhatsAppQR(): UseWhatsAppQRResult {
     try {
       setStatus("loading");
       setError(null);
+
+      try {
+        const statusData = await callEdge("get_status");
+        const normalized = normalizeEvolutionStatus(statusData.raw ?? statusData.status);
+
+        if (normalized.connected) {
+          setConnected(true);
+          setStatus("connected");
+          setQrBase64((statusData.qrBase64 as string | null) ?? null);
+          startPolling();
+          return;
+        }
+
+        if (normalized.status === "qr_ready" || normalized.status === "reconnecting") {
+          const qrData = await callEdge("get_qr");
+          const qr = (qrData.qrBase64 as string | undefined) ?? null;
+          if (qr) {
+            setQrBase64(qr);
+            setStatus("qr_ready");
+            if (qrTimerRef.current) clearTimeout(qrTimerRef.current);
+            qrTimerRef.current = setTimeout(() => refresh(), QR_TTL_MS);
+          } else {
+            setStatus("qr_ready");
+          }
+          startPolling();
+          return;
+        }
+      } catch {
+        // No existing instance yet; create one below.
+      }
+
       const data = await callEdge("create_instance");
       const qr = data.qrBase64 as string | undefined;
       if (qr) {
