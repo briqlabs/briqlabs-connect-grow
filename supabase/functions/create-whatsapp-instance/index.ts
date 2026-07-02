@@ -173,13 +173,18 @@ async function handleGetStatus(db: ReturnType<typeof createClient>, userId: stri
   const name = instanceName(userId);
   const data = await evoGet(`/instance/connectionState/${name}`);
 
-  // Normalise to our vocabulary
-  const raw: string = (data?.instance?.state ?? data?.state ?? "close").toLowerCase();
+  const raw: string = (data?.instance?.state ?? data?.state ?? "close").toString().trim().toLowerCase();
   const connected = raw === "open";
-  const status = connected ? "connected" : raw === "connecting" ? "qr_ready" : "disconnected";
+  const status = connected
+    ? "connected"
+    : raw === "connecting" || raw === "qr" || raw === "qrcode"
+      ? "qr_ready"
+      : "reconnecting";
 
   if (connected) {
     await upsertInstance(db, userId, name, "connected", new Date().toISOString());
+  } else {
+    await upsertInstance(db, userId, name, status === "qr_ready" ? "qr_ready" : "reconnecting");
   }
 
   return { status, connected, raw };
