@@ -112,6 +112,45 @@ async function evoDelete(path: string) {
   return r.json();
 }
 
+async function configureWebhook(instanceName: string) {
+  const webhookUrl = Deno.env.get("SUPABASE_WEBHOOK_URL") ?? Deno.env.get("WHATSAPP_WEBHOOK_URL");
+  if (!webhookUrl) {
+    return;
+  }
+
+  const body = {
+    enabled: true,
+    url: webhookUrl,
+    events: ["MESSAGES_UPSERT"],
+    headers: {},
+    base64: false,
+  };
+
+  await evoPost(`/webhook/set/${instanceName}`, body);
+}
+
+async function handleWebhookHealthCheck(userId: string) {
+  const name = instanceName(userId);
+  const webhookUrl = Deno.env.get("SUPABASE_WEBHOOK_URL") ?? Deno.env.get("WHATSAPP_WEBHOOK_URL") ?? null;
+
+  try {
+    const current = await evoGet(`/webhook/find/${name}`);
+    return {
+      instanceName: name,
+      configured: Boolean(current && current.enabled),
+      webhookUrl,
+      current,
+    };
+  } catch (err) {
+    return {
+      instanceName: name,
+      configured: false,
+      webhookUrl,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
 // ── Action handlers ───────────────────────────────────────────────────────────
 
 /**
@@ -142,6 +181,12 @@ async function handleCreateInstance(db: ReturnType<typeof createClient>, userId:
           qrData?.qrcode?.base64 ??
           qrData?.qrCode?.base64;
 
+        try {
+          await configureWebhook(name);
+        } catch (err) {
+          console.warn("Failed to configure Evolution webhook on reused instance", err);
+        }
+
         await upsertInstance(db, userId, name, status === "connected" ? "connected" : status === "qr_ready" ? "qr_ready" : "reconnecting");
         return { instanceName: name, qrBase64, reused: true };
       } catch {
@@ -170,6 +215,12 @@ async function handleCreateInstance(db: ReturnType<typeof createClient>, userId:
     data?.qrcode?.base64 ??
     data?.base64 ??
     data?.qrCode?.base64;
+
+  try {
+    await configureWebhook(name);
+  } catch (err) {
+    console.warn("Failed to configure Evolution webhook", err);
+  }
 
   await upsertInstance(db, userId, name, "qr_ready");
 
@@ -273,6 +324,7 @@ Deno.serve(async (req) => {
       case "get_qr":           result = await handleGetQr(db, userId);          break;
       case "get_status":       result = await handleGetStatus(db, userId);      break;
       case "delete_instance":  result = await handleDeleteInstance(db, userId); break;
+      case "webhook_health":   result = await handleWebhookHealthCheck(userId); break;
       default:
         return new Response(JSON.stringify({ error: `Unknown action: ${action}` }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
