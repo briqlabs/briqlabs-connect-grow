@@ -9,6 +9,7 @@
 //   { action: "delete_instance" }             → logout / remove instance
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { resolveWebhookUrl } from "./webhook-utils.ts";
 
 const EVOLUTION_URL = Deno.env.get("EVOLUTION_API_URL")!;   // e.g. https://your-app.up.railway.app
 const EVOLUTION_KEY = Deno.env.get("EVOLUTION_API_KEY")!;   // Global API key set in Evolution
@@ -113,9 +114,14 @@ async function evoDelete(path: string) {
 }
 
 async function configureWebhook(instanceName: string) {
-  const webhookUrl = Deno.env.get("SUPABASE_WEBHOOK_URL") ?? Deno.env.get("WHATSAPP_WEBHOOK_URL");
+  const webhookUrl = resolveWebhookUrl({
+    SUPABASE_WEBHOOK_URL: Deno.env.get("SUPABASE_WEBHOOK_URL") ?? undefined,
+    WHATSAPP_WEBHOOK_URL: Deno.env.get("WHATSAPP_WEBHOOK_URL") ?? undefined,
+    SUPABASE_URL: Deno.env.get("SUPABASE_URL") ?? undefined,
+  });
+
   if (!webhookUrl) {
-    return;
+    throw new Error("Unable to resolve a webhook URL for Evolution API");
   }
 
   const body = {
@@ -131,7 +137,11 @@ async function configureWebhook(instanceName: string) {
 
 async function handleWebhookHealthCheck(userId: string) {
   const name = instanceName(userId);
-  const webhookUrl = Deno.env.get("SUPABASE_WEBHOOK_URL") ?? Deno.env.get("WHATSAPP_WEBHOOK_URL") ?? null;
+  const webhookUrl = resolveWebhookUrl({
+    SUPABASE_WEBHOOK_URL: Deno.env.get("SUPABASE_WEBHOOK_URL") ?? undefined,
+    WHATSAPP_WEBHOOK_URL: Deno.env.get("WHATSAPP_WEBHOOK_URL") ?? undefined,
+    SUPABASE_URL: Deno.env.get("SUPABASE_URL") ?? undefined,
+  });
 
   try {
     const current = await evoGet(`/webhook/find/${name}`);
