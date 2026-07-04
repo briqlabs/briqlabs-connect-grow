@@ -125,11 +125,14 @@ async function configureWebhook(instanceName: string) {
   }
 
   const body = {
-    enabled: true,
-    url: webhookUrl,
-    events: ["MESSAGES_UPSERT"],
-    headers: {},
-    base64: false,
+    webhook: {
+      enabled: true,
+      url: webhookUrl,
+      byEvents: false,
+      events: ["MESSAGES_UPSERT"],
+      headers: {},
+      base64: false,
+    },
   };
 
   await evoPost(`/webhook/set/${instanceName}`, body);
