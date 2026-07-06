@@ -9,7 +9,7 @@
 //   { action: "delete_instance" }             → logout / remove instance
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { resolveWebhookUrl } from "./webhook-utils.ts";
+import { buildInstanceCreatePayload, isWebhookEnabled, resolveWebhookUrl } from "./webhook-utils.ts";
 
 const EVOLUTION_URL = Deno.env.get("EVOLUTION_API_URL")!;   // e.g. https://your-app.up.railway.app
 const EVOLUTION_KEY = Deno.env.get("EVOLUTION_API_KEY")!;   // Global API key set in Evolution
@@ -124,18 +124,16 @@ async function configureWebhook(instanceName: string) {
     throw new Error("Unable to resolve a webhook URL for Evolution API");
   }
 
-  const body = {
-    webhook: {
-      enabled: true,
-      url: webhookUrl,
-      byEvents: false,
-      events: ["MESSAGES_UPSERT"],
-      headers: {},
-      base64: false,
-    },
-  };
+  const webhook = buildWebhookConfig(webhookUrl);
 
-  await evoPost(`/webhook/set/${instanceName}`, body);
+  try {
+    await evoPost(`/webhook/set/${instanceName}`, webhook);
+  } catch (err) {
+    await evoPost(`/webhook/set/${instanceName}`, { webhook });
+    if (err instanceof Error) {
+      console.warn("Evolution webhook flat payload failed; nested fallback succeeded", err.message);
+    }
+  }
 }
 
 async function handleWebhookHealthCheck(userId: string) {
@@ -150,7 +148,7 @@ async function handleWebhookHealthCheck(userId: string) {
     const current = await evoGet(`/webhook/find/${name}`);
     return {
       instanceName: name,
-      configured: Boolean(current && current.enabled),
+      configured: isWebhookEnabled(current),
       webhookUrl,
       current,
     };
@@ -215,11 +213,12 @@ async function handleCreateInstance(db: ReturnType<typeof createClient>, userId:
     await evoDelete(`/instance/delete/${name}`);
   } catch (_) { /* no-op */ }
 
-  const body = {
-    instanceName: name,
-    qrcode:       true,
-    integration:  "WHATSAPP-BAILEYS",
-  };
+  const webhookUrl = resolveWebhookUrl({
+    SUPABASE_WEBHOOK_URL: Deno.env.get("SUPABASE_WEBHOOK_URL") ?? undefined,
+    WHATSAPP_WEBHOOK_URL: Deno.env.get("WHATSAPP_WEBHOOK_URL") ?? undefined,
+    SUPABASE_URL: Deno.env.get("SUPABASE_URL") ?? undefined,
+  });
+  const body = buildInstanceCreatePayload(name, webhookUrl);
 
   const data = await evoPost("/instance/create", body);
 
